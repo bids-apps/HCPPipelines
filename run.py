@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/conda/bin/python3
 import argparse
 import os
 import shutil
@@ -73,6 +73,33 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
     print(cmd)
     run(cmd)
 
+def run_freesurfer(output_dir, subject_id, n_cpus):
+    print(t1ws)
+    subjects_dir = os.path.join(output_dir, subject_id, "T1w")
+    args = {"StudyFolder": output_dir,
+            "Subject": subject_id,
+            "subjects_dir": subjects_dir
+            }
+    cmd = '${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
+      --subject="${Subject}" \
+      --subjectDIR="${subjects_dir}" \
+      --t1="${StudyFolder}/${Subject}/T1w/T1w_acpc_dc_restore.nii.gz" \
+      --t1brain="${StudyFolder}/${Subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" \
+      --t2="${StudyFolder}/${Subject}/T1w/T2w_acpc_dc_restore.nii.gz" \
+      --printcom=""'
+    cmd = cmd.format(**args)
+    print(cmd)
+    if not os.path.exists(os.path.join(subjects_dir, "fsaverage")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "fsaverage"),
+                        os.path.join(subjects_dir, "fsaverage"))
+    if not os.path.exists(os.path.join(subjects_dir, "lh.EC_average")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "lh.EC_average"),
+                        os.path.join(subjects_dir, "lh.EC_average"))
+    if not os.path.exists(os.path.join(subjects_dir, "rh.EC_average")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
+                        os.path.join(subjects_dir, "rh.EC_average"))
+    run(cmd, {"NSLOTS":n_cpus})
+
 __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='FreeSurfer recon-all + custom template generation.')
@@ -119,15 +146,6 @@ else:
 
 # running participant level
 if args.analysis_level == "participant":
-    # if not os.path.exists(os.path.join(args.output_dir, "fsaverage")):
-    #     shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "fsaverage"),
-    #                     os.path.join(args.output_dir, "fsaverage"))
-    # if not os.path.exists(os.path.join(args.output_dir, "lh.EC_average")):
-    #     shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "lh.EC_average"),
-    #                     os.path.join(args.output_dir, "lh.EC_average"))
-    # if not os.path.exists(os.path.join(args.output_dir, "rh.EC_average")):
-    #     shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
-    #                     os.path.join(args.output_dir, "rh.EC_average"))
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
         t1ws = [f.filename for f in layout.get(subject=subject_label,
@@ -147,6 +165,8 @@ if args.analysis_level == "participant":
 
         phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
         te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
+        # HCP expects TE in miliseconds
+        te_diff = te_diff*1000.0
 
         t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
         t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
@@ -165,3 +185,7 @@ if args.analysis_level == "participant":
                            t1_spacing=t1_spacing,
                            t2_spacing=t2_spacing,
                            unwarpdir=unwarpdir)
+
+        # run_freesurfer(output_dir=args.output_dir,
+        #                subject_id="sub-%s"%subject_label,
+        #                n_cpus=args.n_cpus)

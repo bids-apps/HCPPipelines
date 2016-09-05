@@ -82,3 +82,5 @@ ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+
+RUN yum -y install numpy
