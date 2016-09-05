@@ -1,0 +1,29 @@
+machine:
+  services:
+    - docker #don't use 1.10 - caching is broken
+
+dependencies:
+  cache_directories:
+    - "~/docker"
+
+  override:
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - git describe --tags > version
+    - docker build -t bids/${CIRCLE_PROJECT_REPONAME} . :
+        timeout: 21600
+    - mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME}" > ~/docker/image.tar
+
+test:
+  override:
+    # print version
+    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/ds114_test1:/bids_dataset bids/${CIRCLE_PROJECT_REPONAME,,} --version
+
+deployment:
+  hub:
+    owner: BIDS-Apps
+    tag: /.*/
+    commands:
+      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push bids/${CIRCLE_PROJECT_REPONAME,,}:latest; fi :
+          timeout: 21600
+      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag bids/${CIRCLE_PROJECT_REPONAME,,} bids/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG && docker push bids/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG; fi :
+          timeout: 21600
