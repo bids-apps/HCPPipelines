@@ -11,7 +11,7 @@ dependencies:
     - git describe --tags > version
     - docker build -t bids/${CIRCLE_PROJECT_REPONAME} . :
         timeout: 21600
-    - mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME}" > ~/docker/image.tar
+    - mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
 
 test:
   override:
