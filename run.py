@@ -184,38 +184,46 @@ if args.analysis_level == "participant":
         assert (len(t1ws) == 0), "No T1w files found for subject %s!"%subject_label
         assert (len(t2ws) == 0), "No T2w files found for subject %s!"%subject_label
         fieldmap_set = layout.get_fieldmap(t1ws[0])
-        assert fieldmap_set["type"] == "phasediff"
-        merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
-        run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
-        subject_label,
-        merged_file,
-        fieldmap_set["magnitude1"],
-        fieldmap_set["magnitude2"]))
+        if fieldmap_set and fieldmap_set["type"] == "phasediff":
+            merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
+            run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
+            subject_label,
+            merged_file,
+            fieldmap_set["magnitude1"],
+            fieldmap_set["magnitude2"]))
 
-        phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
-        te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
-        # HCP expects TE in miliseconds
-        te_diff = te_diff*1000.0
+            phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
+            te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
+            # HCP expects TE in miliseconds
+            te_diff = te_diff*1000.0
 
-        t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
-        t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
+            t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
+            t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
-        unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
-        unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
-        if len(unwarpdir) == 2:
-            unwarpdir = "-" + unwarpdir[0]
+            unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
+            unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
+            if len(unwarpdir) == 2:
+                unwarpdir = "-" + unwarpdir[0]
+            fmap_args = {mag_file: merged_file,
+                         phasediff_file: fieldmap_set["phasediff"],
+                         te_diff: te_diff,
+                         t1_spacing: t1_spacing,
+                         t2_spacing: t2_spacing,
+                         unwarpdir: unwarpdir}
+        else: #TODO add support for GE and spin echo (TOPUP) fieldmaps
+            fmap_args = {mag_file: "NONE",
+                         phasediff_file: "NONE",
+                         te_diff: "NONE",
+                         t1_spacing: "NONE",
+                         t2_spacing: "NONE",
+                         unwarpdir: "NONE"}
 
         stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
                                                 output_dir=args.output_dir,
                                                 subject_id="sub-%s"%subject_label,
                                                 t1ws=t1ws,
                                                 t2ws=t2ws,
-                                                mag_file=merged_file,
-                                                phasediff_file=fieldmap_set["phasediff"],
-                                                te_diff=te_diff,
-                                                t1_spacing=t1_spacing,
-                                                t2_spacing=t2_spacing,
-                                                unwarpdir=unwarpdir),
+                                                **fmap_args,
                        "FreeSurfer": partial(run_freesurfer,
                                              output_dir=args.output_dir,
                                              subject_id="sub-%s"%subject_label,
