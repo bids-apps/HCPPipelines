@@ -26,7 +26,7 @@ def run(command, env={}, cwd=None):
 
 def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
                        phasediff_file, te_diff, t1_spacing, t2_spacing,
-                       unwarpdir):
+                       unwarpdir, avgrdcmethod):
     print(t1ws)
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
@@ -40,7 +40,8 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
             "TE": "%0.6f"%te_diff,
             "T1wSampleSpacing": "%0.8f"%t1_spacing,
             "T2wSampleSpacing": "%0.8f"%t2_spacing,
-            "UnwarpDir": unwarpdir
+            "UnwarpDir": unwarpdir,
+            "avgrdcmethod": avgrdcmethod
             }
     cmd = '{HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh ' + \
     '--path="{StudyFolder}" ' + \
@@ -69,7 +70,7 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
     '--t2samplespacing="{T2wSampleSpacing}" ' + \
     '--unwarpdir="{UnwarpDir}" ' + \
     '--gdcoeffs="NONE" ' + \
-    '--avgrdcmethod="SiemensFieldMap" ' + \
+    '--avgrdcmethod={avgrdcmethod} ' + \
     '--topupconfig="NONE" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
@@ -209,21 +210,23 @@ if args.analysis_level == "participant":
                          te_diff: te_diff,
                          t1_spacing: t1_spacing,
                          t2_spacing: t2_spacing,
-                         unwarpdir: unwarpdir}
+                         unwarpdir: unwarpdir,
+                         avgrdcmethod: "SiemensFieldMap"}
         else: #TODO add support for GE and spin echo (TOPUP) fieldmaps
             fmap_args = {mag_file: "NONE",
                          phasediff_file: "NONE",
                          te_diff: "NONE",
                          t1_spacing: "NONE",
                          t2_spacing: "NONE",
-                         unwarpdir: "NONE"}
+                         unwarpdir: "NONE",
+                         avgrdcmethod: "NONE"}
 
-        stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
-                                                output_dir=args.output_dir,
-                                                subject_id="sub-%s"%subject_label,
-                                                t1ws=t1ws,
-                                                t2ws=t2ws,
-                                                **fmap_args,
+        stages_dict = {"PreFreeSurfer": partial(partial(run_pre_freesurfer,
+                                                        output_dir=args.output_dir,
+                                                        subject_id="sub-%s"%subject_label,
+                                                        t1ws=t1ws,
+                                                        t2ws=t2ws),
+                                                        **fmap_args),
                        "FreeSurfer": partial(run_freesurfer,
                                              output_dir=args.output_dir,
                                              subject_id="sub-%s"%subject_label,
