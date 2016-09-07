@@ -96,10 +96,13 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get -y install bzip2
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.0.5-Linux-x86_64.sh -O ~/miniconda.sh && \
+RUN apt-get -y update \
+    && apt-get install -y wget bzip2 && \
+    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.0.5-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh
+    rm ~/miniconda.sh && \
+    apt-get remove -y wget bzip2 && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV CONDA=/opt/conda/bin
 

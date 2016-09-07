@@ -101,7 +101,7 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
     if not os.path.exists(os.path.join(subjects_dir, "rh.EC_average")):
         shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
                         os.path.join(subjects_dir, "rh.EC_average"))
-    run(cmd, cwd=output_dir, "NSLOTS":"%d"%n_cpus})
+    run(cmd, cwd=output_dir, env={"NSLOTS":"%d"%n_cpus})
 
 __version__ = open('/version').read()
 
