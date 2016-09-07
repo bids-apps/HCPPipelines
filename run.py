@@ -104,6 +104,28 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
                         os.path.join(subjects_dir, "rh.EC_average"))
     run(cmd, cwd=output_dir, env={"NSLOTS":"%d"%n_cpus})
 
+def run_postfreesurfer(output_dir, subject_id):
+    args = {"StudyFolder": output_dir,
+            "Subject": subject_id,
+            "HCPPIPEDIR": os.environ["HCPPIPEDIR"]
+            }
+    cmd = '${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh ' + \
+      '--path="{StudyFolder}" ' + \
+      '--subject="{Subject}" ' + \
+      '--surfatlasdir="{HCPPIPEDIR_Templates}/standard_mesh_atlases" ' + \
+      '--grayordinatesdir="{HCPPIPEDIR_Templates}/91282_Greyordinates" ' + \
+      '--grayordinatesres="2" ' + \
+      '--hiresmesh="164" ' + \
+      '--lowresmesh="32" ' + \
+      '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
+      '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
+      '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
+      '--regname="FS" ' + \
+      '--printcom=""'
+    cmd = cmd.format(**args)
+    print(cmd)
+    run(cmd, cwd=output_dir)
+
 __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='FreeSurfer recon-all + custom template generation.')
@@ -126,8 +148,8 @@ parser.add_argument('--participant_label', help='The label of the participant th
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
 parser.add_argument('--stages', help='Which stages to run.',
-                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer'],
-                   default=['PreFreeSurfer', 'FreeSurfer'])
+                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer'],
+                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -195,7 +217,10 @@ if args.analysis_level == "participant":
                        "FreeSurfer": partial(run_freesurfer,
                                              output_dir=args.output_dir,
                                              subject_id="sub-%s"%subject_label,
-                                             n_cpus=args.n_cpus)
+                                             n_cpus=args.n_cpus),
+                       "PostFreeSurfer": partial(run_postfreesurfer,
+                                                 output_dir=args.output_dir,
+                                                 subject_id="sub-%s"%subject_label)
                        }
         for stage in args.stages:
             print(stage)
