@@ -1,4 +1,5 @@
-#!/opt/conda/bin/python3
+#!/usr/bin/python
+from __future__ import print_function
 import argparse
 import os
 import shutil
@@ -16,7 +17,7 @@ def run(command, env={}, cwd=None):
                     shell=True, env=merged_env, cwd=cwd)
     while True:
         line = process.stdout.readline()
-        line = str(line, 'utf-8')[:-1]
+        line = str(line)[:-1]
         print(line)
         if line == '' and process.poll() != None:
             break
@@ -197,4 +198,5 @@ if args.analysis_level == "participant":
                                              n_cpus=args.n_cpus)
                        }
         for stage in args.stages:
-            stages_dict[stage]
+            print(stage)
+            stages_dict[stage]()
