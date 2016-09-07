@@ -110,9 +110,9 @@ ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 # RUN $CONDA/pip install https://github.com/chrisfilo/pybids/archive/0159116f0b9583ad1fec1ec36bae16ed949bf466.zip
 # RUN $CONDA/conda install -y six
 
-RUN apt-get update && apt-get install -y python-pip
+RUN apt-get update && apt-get install -y python-pip python-six && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN pip install https://github.com/chrisfilo/pybids/archive/0159116f0b9583ad1fec1ec36bae16ed949bf466.zip
-RUN pip install six
 
 COPY run.py /run.py
 RUN chmod +x /run.py
