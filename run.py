@@ -7,11 +7,13 @@ from subprocess import Popen, PIPE
 from shutil import rmtree
 import subprocess
 from bids.grabbids import BIDSLayout
+from functools import partial
 
-def run(command, env={}):
+def run(command, env={}, cwd=None):
     merged_env = os.environ
     merged_env.update(env)
-    process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT, shell=True, env=merged_env)
+    process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT,
+                    shell=True, env=merged_env, cwd=cwd)
     while True:
         line = process.stdout.readline()
         line = str(line, 'utf-8')[:-1]
@@ -71,22 +73,23 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
     '--printcom=""'
     cmd = cmd.format(**args)
     print(cmd)
-    run(cmd)
+    run(cmd, cwd=output_dir)
 
 def run_freesurfer(output_dir, subject_id, n_cpus):
     print(t1ws)
     subjects_dir = os.path.join(output_dir, subject_id, "T1w")
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
-            "subjects_dir": subjects_dir
+            "subjects_dir": subjects_dir,
+            "HCPPIPEDIR": os.environ["HCPPIPEDIR"]
             }
-    cmd = '${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
-      --subject="${Subject}" \
-      --subjectDIR="${subjects_dir}" \
-      --t1="${StudyFolder}/${Subject}/T1w/T1w_acpc_dc_restore.nii.gz" \
-      --t1brain="${StudyFolder}/${Subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" \
-      --t2="${StudyFolder}/${Subject}/T1w/T2w_acpc_dc_restore.nii.gz" \
-      --printcom=""'
+    cmd = '{HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh ' + \
+      '--subject="{Subject}" ' + \
+      '--subjectDIR="{subjects_dir}" ' + \
+      '--t1="{StudyFolder}/{Subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
+      '--t1brain="{StudyFolder}/{Subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
+      '--t2="{StudyFolder}/{Subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
+      '--printcom=""'
     cmd = cmd.format(**args)
     print(cmd)
     if not os.path.exists(os.path.join(subjects_dir, "fsaverage")):
@@ -98,7 +101,7 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
     if not os.path.exists(os.path.join(subjects_dir, "rh.EC_average")):
         shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
                         os.path.join(subjects_dir, "rh.EC_average"))
-    run(cmd, {"NSLOTS":n_cpus})
+    run(cmd, cwd=output_dir, "NSLOTS":"%d"%n_cpus})
 
 __version__ = open('/version').read()
 
@@ -121,8 +124,9 @@ parser.add_argument('--participant_label', help='The label of the participant th
                    nargs="+")
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
-parser.add_argument('--template_name', help='Name for the custom group level template generated for this dataset',
-                    default="average")
+parser.add_argument('--stages', help='Which stages to run.',
+                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer'],
+                   default=['PreFreeSurfer', 'FreeSurfer'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -172,20 +176,25 @@ if args.analysis_level == "participant":
         t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
         unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
+        unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
         if len(unwarpdir) == 2:
             unwarpdir = "-" + unwarpdir[0]
 
-        run_pre_freesurfer(output_dir=args.output_dir,
-                           subject_id="sub-%s"%subject_label,
-                           t1ws=t1ws,
-                           t2ws=t2ws,
-                           mag_file=merged_file,
-                           phasediff_file=fieldmap_set["phasediff"],
-                           te_diff=te_diff,
-                           t1_spacing=t1_spacing,
-                           t2_spacing=t2_spacing,
-                           unwarpdir=unwarpdir)
-
-        # run_freesurfer(output_dir=args.output_dir,
-        #                subject_id="sub-%s"%subject_label,
-        #                n_cpus=args.n_cpus)
+        stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
+                                                output_dir=args.output_dir,
+                                                subject_id="sub-%s"%subject_label,
+                                                t1ws=t1ws,
+                                                t2ws=t2ws,
+                                                mag_file=merged_file,
+                                                phasediff_file=fieldmap_set["phasediff"],
+                                                te_diff=te_diff,
+                                                t1_spacing=t1_spacing,
+                                                t2_spacing=t2_spacing,
+                                                unwarpdir=unwarpdir),
+                       "FreeSurfer": partial(run_freesurfer,
+                                             output_dir=args.output_dir,
+                                             subject_id="sub-%s"%subject_label,
+                                             n_cpus=args.n_cpus)
+                       }
+        for stage in args.stages:
+            stages_dict[stage]
