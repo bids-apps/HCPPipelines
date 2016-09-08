@@ -108,7 +108,9 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
 def run_postfreesurfer(output_dir, subject_id):
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
-            "HCPPIPEDIR": os.environ["HCPPIPEDIR"]
+            "HCPPIPEDIR": os.environ["HCPPIPEDIR"],
+            "HCPPIPEDIR_Templates": os.environ["HCPPIPEDIR_Templates"],
+            "HCPPIPEDIR_Config": os.environ["HCPPIPEDIR_Config"],
             }
     cmd = '${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh ' + \
       '--path="{StudyFolder}" ' + \
