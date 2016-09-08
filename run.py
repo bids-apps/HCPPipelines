@@ -182,8 +182,8 @@ if args.analysis_level == "participant":
         t2ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T2w',
                                                extensions=["nii.gz", "nii"])]
-        assert (len(t1ws) == 0), "No T1w files found for subject %s!"%subject_label
-        assert (len(t2ws) == 0), "No T2w files found for subject %s!"%subject_label
+        assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
+        assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
         fieldmap_set = layout.get_fieldmap(t1ws[0])
         if fieldmap_set and fieldmap_set["type"] == "phasediff":
             merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
