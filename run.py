@@ -3,6 +3,7 @@ from __future__ import print_function
 import argparse
 import os
 import shutil
+import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
@@ -106,7 +107,7 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
     run(cmd, cwd=output_dir, env={"NSLOTS":str(n_cpus),
                                   "OMP_NUM_THREADS": str(n_cpus)})
 
-def run_postfreesurfer(output_dir, subject_id, n_cpus):
+def run_post_freesurfer(output_dir, subject_id, n_cpus):
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
             "HCPPIPEDIR": os.environ["HCPPIPEDIR"],
@@ -130,6 +131,35 @@ def run_postfreesurfer(output_dir, subject_id, n_cpus):
     print(cmd)
     run(cmd, cwd=output_dir, env={"OMP_NUM_THREADS": str(n_cpus)})
 
+def run_generic_fMRI_volume_processsing(**args):
+    print(args)
+    args["HCPPIPEDIR_Config"] = os.environ["HCPPIPEDIR_Config"]
+    args["HCPPIPEDIR"] = os.environ["HCPPIPEDIR"]
+    cmd = '{HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh ' + \
+      '--path={path} ' + \
+      '--subject={subject} ' + \
+      '--fmriname={fmriname} ' + \
+      '--fmritcs={fmritcs} ' + \
+      '--fmriscout={fmriscout} ' + \
+      '--SEPhaseNeg={SEPhaseNeg} ' + \
+      '--SEPhasePos={SEPhasePos} ' + \
+      '--fmapmag="NONE" ' + \
+      '--fmapphase="NONE" ' + \
+      '--fmapgeneralelectric="NONE" ' + \
+      '--echospacing={echospacing} ' + \
+      '--echodiff="NONE" ' + \
+      '--unwarpdir={unwarpdir} ' + \
+      '--fmrires={fmrires} ' + \
+      '--dcmethod={dcmethod} ' + \
+      '--gdcoeffs="NONE" ' + \
+      '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
+      '--printcom="" ' + \
+      '--biascorrection={biascorrection} ' + \
+      '--mctype="MCFLIRT"'
+    cmd = cmd.format(**args)
+    print(cmd)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
 __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='FreeSurfer recon-all + custom template generation.')
@@ -152,8 +182,8 @@ parser.add_argument('--participant_label', help='The label of the participant th
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
 parser.add_argument('--stages', help='Which stages to run.',
-                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer'],
-                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer'])
+                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume'],
+                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -224,7 +254,7 @@ if args.analysis_level == "participant":
                          "unwarpdir": "NONE",
                          "avgrdcmethod": "NONE"}
 
-        stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
+        struct_stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
                                                 output_dir=args.output_dir,
                                                 subject_id="sub-%s"%subject_label,
                                                 t1ws=t1ws,
@@ -235,11 +265,69 @@ if args.analysis_level == "participant":
                                              output_dir=args.output_dir,
                                              subject_id="sub-%s"%subject_label,
                                              n_cpus=args.n_cpus),
-                       "PostFreeSurfer": partial(run_postfreesurfer,
+                       "PostFreeSurfer": partial(run_post_freesurfer,
                                                  output_dir=args.output_dir,
                                                  subject_id="sub-%s"%subject_label,
                                                  n_cpus=args.n_cpus)
                        }
-        for stage in args.stages:
-            print(stage)
-            stages_dict[stage]()
+        for stage, stage_func in struct_stages_dict.iteritems():
+            if stage in args.stages:
+                stage_func()
+
+        bolds = [f.filename for f in layout.get(subject=subject_label,
+                                                type='bold',
+                                                extensions=["nii.gz", "nii"])]
+        for fmritcs in bolds:
+            fmriname = fmritcs.split("task-")[1].split("_")[0]
+            assert fmriname
+
+            fmriscout = fmritcs.replace("_bold", "_sbref")
+            if not os.path.exists(fmriscout):
+                fmriscout = "NONE"
+
+            fieldmap_set = layout.get_fieldmap(fmritcs)
+            print(fieldmap_set)
+            if fieldmap_set and fieldmap_set["type"] == "epi":
+                SEPhaseNeg = None
+                SEPhasePos = None
+                for fieldmap in fieldmap_set["epi"]:
+                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                    if "-" in enc_dir:
+                        SEPhaseNeg = fieldmap
+                    else:
+                        SEPhasePos = fieldmap
+                echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
+                unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
+                unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
+                if len(unwarpdir) == 2:
+                    unwarpdir = "-" + unwarpdir[0]
+                dcmethod = "TOPUP"
+                biascorrection = "SEBASED"
+            else:
+                SEPhaseNeg = "NONE"
+                SEPhasePos = "NONE"
+                echospacing = "NONE"
+                unwarpdir = "NONE"
+                dcmethod = "NONE"
+                biascorrection = "NONE"
+
+            zooms = nibabel.load(fmritcs).get_header().get_zooms()
+            fmrires = "%.3f"%min(zooms[:3])
+
+            func_stages_dict = {"fMRIVolume": run_generic_fMRI_volume_processsing(path=args.output_dir,
+                                                subject="sub-%s"%subject_label,
+                                                fmriname=fmriname,
+                                                fmritcs=fmritcs,
+                                                fmriscout=fmriscout,
+                                                SEPhaseNeg=SEPhaseNeg,
+                                                SEPhasePos=SEPhasePos,
+                                                echospacing=echospacing,
+                                                unwarpdir=unwarpdir,
+                                                fmrires=fmrires,
+                                                dcmethod=dcmethod,
+                                                biascorrection=biascorrection,
+                                                n_cpus=args.n_cpus)
+                           }
+            for stage, stage_func in func_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
