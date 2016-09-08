@@ -205,21 +205,21 @@ if args.analysis_level == "participant":
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
             if len(unwarpdir) == 2:
                 unwarpdir = "-" + unwarpdir[0]
-            fmap_args = {mag_file: merged_file,
-                         phasediff_file: fieldmap_set["phasediff"],
-                         te_diff: te_diff,
-                         t1_spacing: t1_spacing,
-                         t2_spacing: t2_spacing,
-                         unwarpdir: unwarpdir,
-                         avgrdcmethod: "SiemensFieldMap"}
+            fmap_args = {"mag_file": merged_file,
+                         "phasediff_file": fieldmap_set["phasediff"],
+                         "te_diff": te_diff,
+                         "t1_spacing": t1_spacing,
+                         "t2_spacing": t2_spacing,
+                         "unwarpdir": unwarpdir,
+                         "avgrdcmethod": "SiemensFieldMap"}
         else: #TODO add support for GE and spin echo (TOPUP) fieldmaps
-            fmap_args = {mag_file: "NONE",
-                         phasediff_file: "NONE",
-                         te_diff: "NONE",
-                         t1_spacing: "NONE",
-                         t2_spacing: "NONE",
-                         unwarpdir: "NONE",
-                         avgrdcmethod: "NONE"}
+            fmap_args = {"mag_file": "NONE",
+                         "phasediff_file": "NONE",
+                         "te_diff": "NONE",
+                         "t1_spacing": "NONE",
+                         "t2_spacing": "NONE",
+                         "unwarpdir": "NONE",
+                         "avgrdcmethod": "NONE"}
 
         stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
                                                 output_dir=args.output_dir,
