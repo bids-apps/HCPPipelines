@@ -26,7 +26,7 @@ def run(command, env={}, cwd=None):
 
 def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
                        phasediff_file, te_diff, t1_spacing, t2_spacing,
-                       unwarpdir, avgrdcmethod):
+                       unwarpdir, avgrdcmethod, n_cpus):
     print(t1ws)
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
@@ -75,7 +75,7 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
     '--printcom=""'
     cmd = cmd.format(**args)
     print(cmd)
-    run(cmd, cwd=output_dir)
+    run(cmd, cwd=output_dir, env={"OMP_NUM_THREADS": str(n_cpus)})
 
 def run_freesurfer(output_dir, subject_id, n_cpus):
     print(t1ws)
@@ -103,16 +103,17 @@ def run_freesurfer(output_dir, subject_id, n_cpus):
     if not os.path.exists(os.path.join(subjects_dir, "rh.EC_average")):
         shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
                         os.path.join(subjects_dir, "rh.EC_average"))
-    run(cmd, cwd=output_dir, env={"NSLOTS":"%d"%n_cpus})
+    run(cmd, cwd=output_dir, env={"NSLOTS":str(n_cpus),
+                                  "OMP_NUM_THREADS": str(n_cpus)})
 
-def run_postfreesurfer(output_dir, subject_id):
+def run_postfreesurfer(output_dir, subject_id, n_cpus):
     args = {"StudyFolder": output_dir,
             "Subject": subject_id,
             "HCPPIPEDIR": os.environ["HCPPIPEDIR"],
             "HCPPIPEDIR_Templates": os.environ["HCPPIPEDIR_Templates"],
             "HCPPIPEDIR_Config": os.environ["HCPPIPEDIR_Config"],
             }
-    cmd = '${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh ' + \
+    cmd = '{HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh ' + \
       '--path="{StudyFolder}" ' + \
       '--subject="{Subject}" ' + \
       '--surfatlasdir="{HCPPIPEDIR_Templates}/standard_mesh_atlases" ' + \
@@ -127,7 +128,7 @@ def run_postfreesurfer(output_dir, subject_id):
       '--printcom=""'
     cmd = cmd.format(**args)
     print(cmd)
-    run(cmd, cwd=output_dir)
+    run(cmd, cwd=output_dir, env={"OMP_NUM_THREADS": str(n_cpus)})
 
 __version__ = open('/version').read()
 
@@ -228,6 +229,7 @@ if args.analysis_level == "participant":
                                                 subject_id="sub-%s"%subject_label,
                                                 t1ws=t1ws,
                                                 t2ws=t2ws,
+                                                n_cpus=args.n_cpus,
                                                 **fmap_args),
                        "FreeSurfer": partial(run_freesurfer,
                                              output_dir=args.output_dir,
@@ -235,7 +237,8 @@ if args.analysis_level == "participant":
                                              n_cpus=args.n_cpus),
                        "PostFreeSurfer": partial(run_postfreesurfer,
                                                  output_dir=args.output_dir,
-                                                 subject_id="sub-%s"%subject_label)
+                                                 subject_id="sub-%s"%subject_label,
+                                                 n_cpus=args.n_cpus)
                        }
         for stage in args.stages:
             print(stage)
