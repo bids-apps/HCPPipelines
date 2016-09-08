@@ -221,12 +221,12 @@ if args.analysis_level == "participant":
                          unwarpdir: "NONE",
                          avgrdcmethod: "NONE"}
 
-        stages_dict = {"PreFreeSurfer": partial(partial(run_pre_freesurfer,
-                                                        output_dir=args.output_dir,
-                                                        subject_id="sub-%s"%subject_label,
-                                                        t1ws=t1ws,
-                                                        t2ws=t2ws),
-                                                        **fmap_args),
+        stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
+                                                output_dir=args.output_dir,
+                                                subject_id="sub-%s"%subject_label,
+                                                t1ws=t1ws,
+                                                t2ws=t2ws,
+                                                **fmap_args),
                        "FreeSurfer": partial(run_freesurfer,
                                              output_dir=args.output_dir,
                                              subject_id="sub-%s"%subject_label,
