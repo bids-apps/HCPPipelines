@@ -10,6 +10,7 @@ from shutil import rmtree
 import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
+from collections import OrderedDict
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -25,15 +26,13 @@ def run(command, env={}, cwd=None):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
-grayordinatesres = 2
+grayordinatesres = 2.0
+lowresmesh = 32
 
 def run_pre_freesurfer(**args):
     args.update(os.environ)
     args["t1"] = "@".join(t1ws)
     args["t2"] = "@".join(t2ws)
-    args["echodiff"] = "%0.6f"%args["echodiff"]
-    args["t1samplespacing"] = "%0.8f"%args["t1samplespacing"]
-    args["t2samplespacing"] = "%0.8f"%args["t2samplespacing"]
 
     cmd = '{HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh ' + \
     '--path="{path}" ' + \
@@ -53,13 +52,13 @@ def run_pre_freesurfer(**args):
     '--fmapmag="{fmapmag}" ' + \
     '--fmapphase="{fmapphase}" ' + \
     '--fmapgeneralelectric="NONE" ' + \
-    '--echodiff="{echodiff}" ' + \
+    '--echodiff="{echodiff:.6f}" ' + \
     '--SEPhaseNeg="NONE" ' + \
     '--SEPhasePos="NONE" ' + \
     '--echospacing="NONE" ' + \
     '--seunwarpdir="NONE" ' + \
-    '--t1samplespacing="{t1samplespacing}" ' + \
-    '--t2samplespacing="{t2samplespacing}" ' + \
+    '--t1samplespacing="{t1samplespacing:.8f}" ' + \
+    '--t2samplespacing="{t2samplespacing:.8f}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs="NONE" ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
@@ -91,7 +90,7 @@ def run_freesurfer(**args):
                         os.path.join(args["subjectDIR"], "rh.EC_average"))
 
     run(cmd, cwd=args["path"], env={"NSLOTS": str(args["n_cpus"]),
-                                  "OMP_NUM_THREADS": str(args["n_cpus"])})
+                                    "OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_post_freesurfer(**args):
     args.update(os.environ)
@@ -100,9 +99,9 @@ def run_post_freesurfer(**args):
       '--subject="{subject}" ' + \
       '--surfatlasdir="{HCPPIPEDIR_Templates}/standard_mesh_atlases" ' + \
       '--grayordinatesdir="{HCPPIPEDIR_Templates}/91282_Greyordinates" ' + \
-      '--grayordinatesres="%d" '%grayordinatesres + \
+      '--grayordinatesres="{grayordinatesres:.2f}" ' + \
       '--hiresmesh="164" ' + \
-      '--lowresmesh="32" ' + \
+      '--lowresmesh="{lowresmesh:d}" ' + \
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
@@ -127,7 +126,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--echospacing={echospacing} ' + \
       '--echodiff="NONE" ' + \
       '--unwarpdir={unwarpdir} ' + \
-      '--fmrires={fmrires} ' + \
+      '--fmrires={fmrires:.2f} ' + \
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
@@ -138,17 +137,30 @@ def run_generic_fMRI_volume_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_surface_processsing(**args):
-    args["HCPPIPEDIR_Config"] = os.environ["HCPPIPEDIR_Config"]
-    args["HCPPIPEDIR"] = os.environ["HCPPIPEDIR"]
+    args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
       '--path={path} ' + \
       '--subject={subject} ' + \
       '--fmriname={fmriname} ' + \
-      '--lowresmesh="32" ' + \
-      '--fmrires={fmrires} ' + \
-      '--smoothingFWHM={fmrires} ' + \
-      '--grayordinatesres="%d" '%grayordinatesres + \
+      '--lowresmesh="{lowresmesh:d}" ' + \
+      '--fmrires={fmrires:.2f} ' + \
+      '--smoothingFWHM={fmrires:.2f} ' + \
+      '--grayordinatesres="{grayordinatesres:.2f}" ' + \
       '--regname="FS"'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
+def run_diffusion_processsing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh ' + \
+      '--posData="{posData}" ' +\
+      '--negData="{negData}" ' + \
+      '--path="{path}" ' + \
+      '--subject="{subject}" ' + \
+      '--echospacing="{echospacing}" '+ \
+      '--PEdir={PEdir} ' + \
+      '--gdcoeffs="NONE" ' + \
+      '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -174,8 +186,12 @@ parser.add_argument('--participant_label', help='The label of the participant th
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
 parser.add_argument('--stages', help='Which stages to run.',
-                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume', 'fMRISurface'],
-                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume', 'fMRISurface'])
+                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
+                                       'PostFreeSurfer', 'fMRIVolume',
+                                       'fMRISurface', 'DiffusionPreprocessing'],
+                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
+                            'fMRIVolume', 'fMRISurface',
+                            'DiffusionPreprocessing'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -246,22 +262,24 @@ if args.analysis_level == "participant":
                          "unwarpdir": "NONE",
                          "avgrdcmethod": "NONE"}
 
-        struct_stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
+        struct_stages_dict = OrderedDict([("PreFreeSurfer", partial(run_pre_freesurfer,
                                                 path=args.output_dir,
                                                 subject="sub-%s"%subject_label,
                                                 t1ws=t1ws,
                                                 t2ws=t2ws,
                                                 n_cpus=args.n_cpus,
-                                                **fmap_args),
-                       "FreeSurfer": partial(run_freesurfer,
+                                                **fmap_args)),
+                       ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,
                                              subject="sub-%s"%subject_label,
-                                             n_cpus=args.n_cpus),
-                       "PostFreeSurfer": partial(run_post_freesurfer,
+                                             n_cpus=args.n_cpus)),
+                       ("PostFreeSurfer", partial(run_post_freesurfer,
                                                  path=args.output_dir,
                                                  subject="sub-%s"%subject_label,
-                                                 n_cpus=args.n_cpus)
-                       }
+                                                 grayordinatesres=grayordinatesres,
+                                                 lowresmesh=lowresmesh,
+                                                 n_cpus=args.n_cpus))
+                       ])
         for stage, stage_func in struct_stages_dict.iteritems():
             if stage in args.stages:
                 stage_func()
@@ -304,9 +322,9 @@ if args.analysis_level == "participant":
                 biascorrection = "NONE"
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
-            fmrires = "%.3f"%min(zooms[:3])
+            fmrires = min(zooms[:3])
 
-            func_stages_dict = {"fMRIVolume": partial(run_generic_fMRI_volume_processsing,
+            func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                       path=args.output_dir,
                                                       subject="sub-%s"%subject_label,
                                                       fmriname=fmriname,
@@ -319,14 +337,45 @@ if args.analysis_level == "participant":
                                                       fmrires=fmrires,
                                                       dcmethod=dcmethod,
                                                       biascorrection=biascorrection,
-                                                      n_cpus=args.n_cpus),
-                                "fMRISurface": partial(run_generic_fMRI_surface_processsing,
+                                                      n_cpus=args.n_cpus)),
+                                ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
                                                        path=args.output_dir,
                                                        subject="sub-%s"%subject_label,
                                                        fmriname=fmriname,
                                                        fmrires=fmrires,
-                                                       n_cpus=args.n_cpus)
-                                }
+                                                       n_cpus=args.n_cpus,
+                                                       grayordinatesres=grayordinatesres,
+                                                       lowresmesh=lowresmesh))
+                                ])
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
                     stage_func()
+
+        dwis = layout.get(subject=subject_label, type='dwi',
+                                                 extensions=["nii.gz", "nii"])
+
+        # print(dwis)
+        # acqs = set(layout.get(target='acquisition', return_type='id',
+        #                       subject=subject_label, type='dwi',
+        #                       extensions=["nii.gz", "nii"]))
+        # print(acqs)
+        # posData = []
+        # negData = []
+        # for acq in acqs:
+        #     pos = "EMPTY"
+        #     neg = "EMPTY"
+        #     dwis = layout.get(subject=subject_label,
+        #                       type='dwi', acquisition=acq,
+        #                       extensions=["nii.gz", "nii"])
+        #     assert len(dwis) <= 2
+        #     for dwi in dwis:
+        #         dwi = dwi.filename
+        #         if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
+        #             neg = dwi
+        #         else:
+        #             pos = dwi
+        #     posData.append(pos)
+        #     negData.append(neg)
+        #
+        # print(negData)
+        # print(posData)
