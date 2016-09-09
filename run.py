@@ -25,30 +25,21 @@ def run(command, env={}, cwd=None):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
-def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
-                       phasediff_file, te_diff, t1_spacing, t2_spacing,
-                       unwarpdir, avgrdcmethod, n_cpus):
-    print(t1ws)
-    args = {"StudyFolder": output_dir,
-            "Subject": subject_id,
-            "T1wInputImages": "@".join(t1ws),
-            "T2wInputImages": "@".join(t2ws),
-            "HCPPIPEDIR": os.environ["HCPPIPEDIR"],
-            "HCPPIPEDIR_Templates": os.environ["HCPPIPEDIR_Templates"],
-            "HCPPIPEDIR_Config": os.environ["HCPPIPEDIR_Config"],
-            "MagnitudeInputName": mag_file,
-            "PhaseInputName": phasediff_file,
-            "TE": "%0.6f"%te_diff,
-            "T1wSampleSpacing": "%0.8f"%t1_spacing,
-            "T2wSampleSpacing": "%0.8f"%t2_spacing,
-            "UnwarpDir": unwarpdir,
-            "avgrdcmethod": avgrdcmethod
-            }
+grayordinatesres = 2
+
+def run_pre_freesurfer(**args):
+    args.update(os.environ)
+    args["t1"] = "@".join(t1ws)
+    args["t2"] = "@".join(t2ws)
+    args["echodiff"] = "%0.6f"%args["echodiff"]
+    args["t1samplespacing"] = "%0.8f"%args["t1samplespacing"]
+    args["t2samplespacing"] = "%0.8f"%args["t2samplespacing"]
+
     cmd = '{HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh ' + \
-    '--path="{StudyFolder}" ' + \
-    '--subject="{Subject}" ' + \
-    '--t1="{T1wInputImages}" ' + \
-    '--t2="{T2wInputImages}" ' + \
+    '--path="{path}" ' + \
+    '--subject="{subject}" ' + \
+    '--t1="{t1}" ' + \
+    '--t2="{t2}" ' + \
     '--t1template="{HCPPIPEDIR_Templates}/MNI152_T1_0.7mm.nii.gz" ' + \
     '--t1templatebrain="{HCPPIPEDIR_Templates}/MNI152_T1_0.7mm_brain.nii.gz" ' + \
     '--t1template2mm="{HCPPIPEDIR_Templates}/MNI152_T1_2mm.nii.gz" ' + \
@@ -59,67 +50,57 @@ def run_pre_freesurfer(output_dir, subject_id, t1ws, t2ws, mag_file,
     '--template2mmmask="{HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil.nii.gz" ' + \
     '--brainsize="150" ' + \
     '--fnirtconfig="{HCPPIPEDIR_Config}/T1_2_MNI152_2mm.cnf" ' + \
-    '--fmapmag="{MagnitudeInputName}" ' + \
-    '--fmapphase="{PhaseInputName}" ' + \
+    '--fmapmag="{fmapmag}" ' + \
+    '--fmapphase="{fmapphase}" ' + \
     '--fmapgeneralelectric="NONE" ' + \
-    '--echodiff="{TE}" ' + \
+    '--echodiff="{echodiff}" ' + \
     '--SEPhaseNeg="NONE" ' + \
     '--SEPhasePos="NONE" ' + \
     '--echospacing="NONE" ' + \
     '--seunwarpdir="NONE" ' + \
-    '--t1samplespacing="{T1wSampleSpacing}" ' + \
-    '--t2samplespacing="{T2wSampleSpacing}" ' + \
-    '--unwarpdir="{UnwarpDir}" ' + \
+    '--t1samplespacing="{t1samplespacing}" ' + \
+    '--t2samplespacing="{t2samplespacing}" ' + \
+    '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs="NONE" ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
     '--topupconfig="NONE" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
-    print(cmd)
-    run(cmd, cwd=output_dir, env={"OMP_NUM_THREADS": str(n_cpus)})
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
-def run_freesurfer(output_dir, subject_id, n_cpus):
-    print(t1ws)
-    subjects_dir = os.path.join(output_dir, subject_id, "T1w")
-    args = {"StudyFolder": output_dir,
-            "Subject": subject_id,
-            "subjects_dir": subjects_dir,
-            "HCPPIPEDIR": os.environ["HCPPIPEDIR"]
-            }
+def run_freesurfer(**args):
+    args.update(os.environ)
+    args["subjectDIR"] = os.path.join(args["path"], args["subject"], "T1w")
     cmd = '{HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh ' + \
-      '--subject="{Subject}" ' + \
-      '--subjectDIR="{subjects_dir}" ' + \
-      '--t1="{StudyFolder}/{Subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
-      '--t1brain="{StudyFolder}/{Subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
-      '--t2="{StudyFolder}/{Subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
+      '--subject="{subject}" ' + \
+      '--subjectDIR="{subjectDIR}" ' + \
+      '--t1="{path}/{subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
+      '--t1brain="{path}/{subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
+      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
-    print(cmd)
-    if not os.path.exists(os.path.join(subjects_dir, "fsaverage")):
-        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "fsaverage"),
-                        os.path.join(subjects_dir, "fsaverage"))
-    if not os.path.exists(os.path.join(subjects_dir, "lh.EC_average")):
-        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "lh.EC_average"),
-                        os.path.join(subjects_dir, "lh.EC_average"))
-    if not os.path.exists(os.path.join(subjects_dir, "rh.EC_average")):
-        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
-                        os.path.join(subjects_dir, "rh.EC_average"))
-    run(cmd, cwd=output_dir, env={"NSLOTS":str(n_cpus),
-                                  "OMP_NUM_THREADS": str(n_cpus)})
 
-def run_post_freesurfer(output_dir, subject_id, n_cpus):
-    args = {"StudyFolder": output_dir,
-            "Subject": subject_id,
-            "HCPPIPEDIR": os.environ["HCPPIPEDIR"],
-            "HCPPIPEDIR_Templates": os.environ["HCPPIPEDIR_Templates"],
-            "HCPPIPEDIR_Config": os.environ["HCPPIPEDIR_Config"],
-            }
+    if not os.path.exists(os.path.join(args["subjectDIR"], "fsaverage")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "fsaverage"),
+                        os.path.join(args["subjectDIR"], "fsaverage"))
+    if not os.path.exists(os.path.join(args["subjectDIR"], "lh.EC_average")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "lh.EC_average"),
+                        os.path.join(args["subjectDIR"], "lh.EC_average"))
+    if not os.path.exists(os.path.join(args["subjectDIR"], "rh.EC_average")):
+        shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
+                        os.path.join(args["subjectDIR"], "rh.EC_average"))
+
+    run(cmd, cwd=args["path"], env={"NSLOTS": str(args["n_cpus"]),
+                                  "OMP_NUM_THREADS": str(args["n_cpus"])})
+
+def run_post_freesurfer(**args):
+    args.update(os.environ)
     cmd = '{HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh ' + \
-      '--path="{StudyFolder}" ' + \
-      '--subject="{Subject}" ' + \
+      '--path="{path}" ' + \
+      '--subject="{subject}" ' + \
       '--surfatlasdir="{HCPPIPEDIR_Templates}/standard_mesh_atlases" ' + \
       '--grayordinatesdir="{HCPPIPEDIR_Templates}/91282_Greyordinates" ' + \
-      '--grayordinatesres="2" ' + \
+      '--grayordinatesres="%d" '%grayordinatesres + \
       '--hiresmesh="164" ' + \
       '--lowresmesh="32" ' + \
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
@@ -128,13 +109,10 @@ def run_post_freesurfer(output_dir, subject_id, n_cpus):
       '--regname="FS" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
-    print(cmd)
-    run(cmd, cwd=output_dir, env={"OMP_NUM_THREADS": str(n_cpus)})
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_volume_processsing(**args):
-    print(args)
-    args["HCPPIPEDIR_Config"] = os.environ["HCPPIPEDIR_Config"]
-    args["HCPPIPEDIR"] = os.environ["HCPPIPEDIR"]
+    args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh ' + \
       '--path={path} ' + \
       '--subject={subject} ' + \
@@ -157,7 +135,21 @@ def run_generic_fMRI_volume_processsing(**args):
       '--biascorrection={biascorrection} ' + \
       '--mctype="MCFLIRT"'
     cmd = cmd.format(**args)
-    print(cmd)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
+def run_generic_fMRI_surface_processsing(**args):
+    args["HCPPIPEDIR_Config"] = os.environ["HCPPIPEDIR_Config"]
+    args["HCPPIPEDIR"] = os.environ["HCPPIPEDIR"]
+    cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
+      '--path={path} ' + \
+      '--subject={subject} ' + \
+      '--fmriname={fmriname} ' + \
+      '--lowresmesh="32" ' + \
+      '--fmrires={fmrires} ' + \
+      '--smoothingFWHM={fmrires} ' + \
+      '--grayordinatesres="%d" '%grayordinatesres + \
+      '--regname="FS"'
+    cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 __version__ = open('/version').read()
@@ -182,8 +174,8 @@ parser.add_argument('--participant_label', help='The label of the participant th
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
 parser.add_argument('--stages', help='Which stages to run.',
-                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume'],
-                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume'])
+                   nargs="+", choices=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume', 'fMRISurface'],
+                   default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer', 'fMRIVolume', 'fMRISurface'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -193,7 +185,7 @@ args = parser.parse_args()
 
 #
 #
-# run("bids-validator " + args.bids_dir)
+run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
@@ -238,36 +230,36 @@ if args.analysis_level == "participant":
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
             if len(unwarpdir) == 2:
                 unwarpdir = "-" + unwarpdir[0]
-            fmap_args = {"mag_file": merged_file,
-                         "phasediff_file": fieldmap_set["phasediff"],
-                         "te_diff": te_diff,
-                         "t1_spacing": t1_spacing,
-                         "t2_spacing": t2_spacing,
+            fmap_args = {"fmapmag": merged_file,
+                         "fmapphase": fieldmap_set["phasediff"],
+                         "echodiff": te_diff,
+                         "t1samplespacing": t1_spacing,
+                         "t2samplespacing": t2_spacing,
                          "unwarpdir": unwarpdir,
                          "avgrdcmethod": "SiemensFieldMap"}
         else: #TODO add support for GE and spin echo (TOPUP) fieldmaps
-            fmap_args = {"mag_file": "NONE",
-                         "phasediff_file": "NONE",
-                         "te_diff": "NONE",
-                         "t1_spacing": "NONE",
-                         "t2_spacing": "NONE",
+            fmap_args = {"fmapmag": "NONE",
+                         "fmapphase": "NONE",
+                         "echodiff": "NONE",
+                         "t1samplespacing": "NONE",
+                         "t2samplespacing": "NONE",
                          "unwarpdir": "NONE",
                          "avgrdcmethod": "NONE"}
 
         struct_stages_dict = {"PreFreeSurfer": partial(run_pre_freesurfer,
-                                                output_dir=args.output_dir,
-                                                subject_id="sub-%s"%subject_label,
+                                                path=args.output_dir,
+                                                subject="sub-%s"%subject_label,
                                                 t1ws=t1ws,
                                                 t2ws=t2ws,
                                                 n_cpus=args.n_cpus,
                                                 **fmap_args),
                        "FreeSurfer": partial(run_freesurfer,
-                                             output_dir=args.output_dir,
-                                             subject_id="sub-%s"%subject_label,
+                                             path=args.output_dir,
+                                             subject="sub-%s"%subject_label,
                                              n_cpus=args.n_cpus),
                        "PostFreeSurfer": partial(run_post_freesurfer,
-                                                 output_dir=args.output_dir,
-                                                 subject_id="sub-%s"%subject_label,
+                                                 path=args.output_dir,
+                                                 subject="sub-%s"%subject_label,
                                                  n_cpus=args.n_cpus)
                        }
         for stage, stage_func in struct_stages_dict.iteritems():
@@ -314,20 +306,27 @@ if args.analysis_level == "participant":
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
             fmrires = "%.3f"%min(zooms[:3])
 
-            func_stages_dict = {"fMRIVolume": run_generic_fMRI_volume_processsing(path=args.output_dir,
-                                                subject="sub-%s"%subject_label,
-                                                fmriname=fmriname,
-                                                fmritcs=fmritcs,
-                                                fmriscout=fmriscout,
-                                                SEPhaseNeg=SEPhaseNeg,
-                                                SEPhasePos=SEPhasePos,
-                                                echospacing=echospacing,
-                                                unwarpdir=unwarpdir,
-                                                fmrires=fmrires,
-                                                dcmethod=dcmethod,
-                                                biascorrection=biascorrection,
-                                                n_cpus=args.n_cpus)
-                           }
+            func_stages_dict = {"fMRIVolume": partial(run_generic_fMRI_volume_processsing,
+                                                      path=args.output_dir,
+                                                      subject="sub-%s"%subject_label,
+                                                      fmriname=fmriname,
+                                                      fmritcs=fmritcs,
+                                                      fmriscout=fmriscout,
+                                                      SEPhaseNeg=SEPhaseNeg,
+                                                      SEPhasePos=SEPhasePos,
+                                                      echospacing=echospacing,
+                                                      unwarpdir=unwarpdir,
+                                                      fmrires=fmrires,
+                                                      dcmethod=dcmethod,
+                                                      biascorrection=biascorrection,
+                                                      n_cpus=args.n_cpus),
+                                "fMRISurface": partial(run_generic_fMRI_surface_processsing,
+                                                       path=args.output_dir,
+                                                       subject="sub-%s"%subject_label,
+                                                       fmriname=fmriname,
+                                                       fmrires=fmrires,
+                                                       n_cpus=args.n_cpus)
+                                }
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
                     stage_func()
