@@ -166,7 +166,7 @@ def run_diffusion_processsing(**args):
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='FreeSurfer recon-all + custom template generation.')
+parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
@@ -176,7 +176,7 @@ parser.add_argument('output_dir', help='The directory where the output files '
 parser.add_argument('analysis_level', help='Level of the analysis that will be performed. '
                     'Multiple participant level analyses can be run independently '
                     '(in parallel) using the same output_dir.',
-                    choices=['participant', 'group'])
+                    choices=['participant'])
 parser.add_argument('--participant_label', help='The label of the participant that should be analyzed. The label '
                    'corresponds to sub-<participant_label> from the BIDS spec '
                    '(so it does not include "sub-"). If this parameter is not '
@@ -185,7 +185,7 @@ parser.add_argument('--participant_label', help='The label of the participant th
                    nargs="+")
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
-parser.add_argument('--stages', help='Which stages to run.',
+parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
                                        'fMRISurface', 'DiffusionPreprocessing'],
@@ -195,7 +195,7 @@ parser.add_argument('--stages', help='Which stages to run.',
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='BIDS-App example version {}'.format(__version__))
+                    version='HCP Pielines BIDS App version {}'.format(__version__))
 
 args = parser.parse_args()
 
