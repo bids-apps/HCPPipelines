@@ -26,7 +26,7 @@ def run(command, env={}, cwd=None):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
-grayordinatesres = 2.0
+grayordinatesres = "2" # This is currently the only option for which the is an atlas
 lowresmesh = 32
 
 def run_pre_freesurfer(**args):
@@ -99,7 +99,7 @@ def run_post_freesurfer(**args):
       '--subject="{subject}" ' + \
       '--surfatlasdir="{HCPPIPEDIR_Templates}/standard_mesh_atlases" ' + \
       '--grayordinatesdir="{HCPPIPEDIR_Templates}/91282_Greyordinates" ' + \
-      '--grayordinatesres="{grayordinatesres:.2f}" ' + \
+      '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--hiresmesh="164" ' + \
       '--lowresmesh="{lowresmesh:d}" ' + \
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
@@ -145,7 +145,7 @@ def run_generic_fMRI_surface_processsing(**args):
       '--lowresmesh="{lowresmesh:d}" ' + \
       '--fmrires={fmrires:.2f} ' + \
       '--smoothingFWHM={fmrires:.2f} ' + \
-      '--grayordinatesres="{grayordinatesres:.2f}" ' + \
+      '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--regname="FS"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
