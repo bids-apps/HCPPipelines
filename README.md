@@ -25,7 +25,7 @@ Please cite [Glasser et al. 2013][GlasserEtAl] and [Smith et al. 2013][SmithEtAl
 ### Usage
 This App has the following command line arguments:
 
-    PS C:\Users\filo> docker run -ti --rm -v /c/Users/filo/hcp_example_bids:/bids_dir:ro -v /c/Users/filo/test_output:/output --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp bids/hcppipelines --help
+    PS C:\Users\filo> docker run -ti --rm -v /c/Users/filo/hcp_example_bids:/bids_dir:ro -v /c/Users/filo/test_output:/output bids/hcppipelines --help
     usage: run.py [-h]
                   [--participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
                   [--n_cpus N_CPUS]
