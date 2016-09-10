@@ -126,7 +126,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--echospacing={echospacing} ' + \
       '--echodiff="NONE" ' + \
       '--unwarpdir={unwarpdir} ' + \
-      '--fmrires={fmrires:.2f} ' + \
+      '--fmrires={fmrires:.d} ' + \
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
@@ -143,8 +143,8 @@ def run_generic_fMRI_surface_processsing(**args):
       '--subject={subject} ' + \
       '--fmriname={fmriname} ' + \
       '--lowresmesh="{lowresmesh:d}" ' + \
-      '--fmrires={fmrires:.2f} ' + \
-      '--smoothingFWHM={fmrires:.2f} ' + \
+      '--fmrires={fmrires:.d} ' + \
+      '--smoothingFWHM={fmrires:.d} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--regname="FS"'
     cmd = cmd.format(**args)
@@ -322,7 +322,7 @@ if args.analysis_level == "participant":
                 biascorrection = "NONE"
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
-            fmrires = min(zooms[:3])
+            fmrires = int(min(zooms[:3]))
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                       path=args.output_dir,
