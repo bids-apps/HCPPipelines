@@ -79,6 +79,8 @@ To run it in participant level mode (for one participant):
 ### TODO
 
    - [ ] Add DiffusionProcessing stage
+   - [ ] More testing for fMRI with different resolution
+   - [ ] Run fMRI runs in parallel (when n_cpus present)
    - [ ] Add support for TOPUP and GE fieldmaps for structural scans (please get in touch if you can provide sample data)
    - [ ] Add support for Siemens and GE fieldmaps for fMRI scans (please get in touch if you can provide sample data)
    - [ ] Avoid copying fsaverage folder for every participant
