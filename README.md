@@ -8,6 +8,8 @@ shell scripts) for processing MRI images for the [Human Connectome Project][HCP]
 Among other things, these tools implement the Minimal Preprocessing Pipeline
 (MPP) described in [Glasser et al. 2013][GlasserEtAl].
 
+**This BIDS App requires that each subject has at least one T1w and one T2w scan.** Lack of fieldmaps, or fMRI scans is handled robustly.
+
 ### Documentation
 [Release Notes, Installation, and Usage][release-install-use]
 
@@ -67,7 +69,7 @@ To run it in participant level mode (for one participant):
     docker run -i --rm \
     -v /Users/filo/data/ds005:/bids_dataset:ro \
     -v /Users/filo/outputs:/outputs \
-    bids/example \
+    bids/hcppipelines \
     /bids_dataset /outputs participant --participant_label 01 --license_key "XXXXXX"
 
 
@@ -76,6 +78,7 @@ To run it in participant level mode (for one participant):
    - [ ] Add DiffusionProcessing stage
    - [ ] Add support for TOPUP and GE fieldmaps for structural scans (please get in touch if you can provide sample data)
    - [ ] Add support for Siemens and GE fieldmaps for fMRI scans (please get in touch if you can provide sample data)
+   - [ ] Avoid copying fsaverage folder for every participant
    - [ ] Add ICA FIX stage
    - [ ] Add group level analysis
    - [ ] Add task fMRI model fitting
