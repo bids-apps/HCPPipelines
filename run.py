@@ -126,7 +126,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--echospacing={echospacing} ' + \
       '--echodiff="NONE" ' + \
       '--unwarpdir={unwarpdir} ' + \
-      '--fmrires={fmrires:.d} ' + \
+      '--fmrires={fmrires:d} ' + \
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
@@ -143,8 +143,8 @@ def run_generic_fMRI_surface_processsing(**args):
       '--subject={subject} ' + \
       '--fmriname={fmriname} ' + \
       '--lowresmesh="{lowresmesh:d}" ' + \
-      '--fmrires={fmrires:.d} ' + \
-      '--smoothingFWHM={fmrires:.d} ' + \
+      '--fmrires={fmrires:d} ' + \
+      '--smoothingFWHM={fmrires:d} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--regname="FS"'
     cmd = cmd.format(**args)
