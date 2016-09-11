@@ -126,7 +126,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--echospacing={echospacing} ' + \
       '--echodiff="NONE" ' + \
       '--unwarpdir={unwarpdir} ' + \
-      '--fmrires={fmrires:d} ' + \
+      '--fmrires={fmrires:.2f} ' + \
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
@@ -137,14 +137,15 @@ def run_generic_fMRI_volume_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_surface_processsing(**args):
+    print(args)
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
       '--path={path} ' + \
       '--subject={subject} ' + \
       '--fmriname={fmriname} ' + \
       '--lowresmesh="{lowresmesh:d}" ' + \
-      '--fmrires={fmrires:d} ' + \
-      '--smoothingFWHM={fmrires:d} ' + \
+      '--fmrires={fmrires:.2f} ' + \
+      '--smoothingFWHM={fmrires:.2f} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--regname="FS"'
     cmd = cmd.format(**args)
@@ -322,7 +323,7 @@ if args.analysis_level == "participant":
                 biascorrection = "NONE"
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
-            fmrires = int(min(zooms[:3]))
+            fmrires = float(min(zooms[:3]))
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                       path=args.output_dir,
