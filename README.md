@@ -92,3 +92,4 @@ To run it in participant level mode (for one participant):
 [GlasserEtAl]: http://www.ncbi.nlm.nih.gov/pubmed/23668970
 [SmithEtAl]: http://www.ncbi.nlm.nih.gov/pubmed/23702415
 [release-install-use]: https://github.com/Washington-University/Pipelines/wiki/v3.4.0-Release-Notes,-Installation,-and-Usage
+[hcp-users-subscribe]: http://humanconnectome.org/contact/#subscribe
