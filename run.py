@@ -279,7 +279,7 @@ if args.analysis_level == "participant":
                                                 t2ws=t2ws,
                                                 n_cpus=args.n_cpus,
                                                 t1_template_res=t1_template_res,
-                                                t2_template_res=t2_template_res
+                                                t2_template_res=t2_template_res,
                                                 **fmap_args)),
                        ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,
