@@ -61,7 +61,7 @@ ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
 ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 
 # Install Connectome Workbench
-RUN apt-get update && apt-get -y install connectome-workbench
+RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 
 ENV CARET7DIR=/usr/bin
 
