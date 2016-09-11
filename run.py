@@ -126,7 +126,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--echospacing={echospacing} ' + \
       '--echodiff="NONE" ' + \
       '--unwarpdir={unwarpdir} ' + \
-      '--fmrires={fmrires:.2f} ' + \
+      '--fmrires={fmrires:s} ' + \
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
@@ -144,8 +144,8 @@ def run_generic_fMRI_surface_processsing(**args):
       '--subject={subject} ' + \
       '--fmriname={fmriname} ' + \
       '--lowresmesh="{lowresmesh:d}" ' + \
-      '--fmrires={fmrires:.2f} ' + \
-      '--smoothingFWHM={fmrires:.2f} ' + \
+      '--fmrires={fmrires:s} ' + \
+      '--smoothingFWHM={fmrires:s} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
       '--regname="FS"'
     cmd = cmd.format(**args)
@@ -324,6 +324,10 @@ if args.analysis_level == "participant":
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
             fmrires = float(min(zooms[:3]))
+            fmrires = "2" # https://github.com/Washington-University/Pipelines/blob/637b35f73697b77dcb1d529902fc55f431f03af7/fMRISurface/scripts/SubcorticalProcessing.sh#L43
+            # While running '/usr/bin/wb_command -cifti-create-dense-timeseries /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION_temp_subject.dtseries.nii -volume /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION.nii.gz /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/ROIs/ROIs.2.nii.gz':
+            # ERROR: label volume has a different volume space than data volume
+
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                       path=args.output_dir,
