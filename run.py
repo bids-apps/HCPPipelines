@@ -39,13 +39,13 @@ def run_pre_freesurfer(**args):
     '--subject="{subject}" ' + \
     '--t1="{t1}" ' + \
     '--t2="{t2}" ' + \
-    '--t1template="{HCPPIPEDIR_Templates}/MNI152_T1_0.7mm.nii.gz" ' + \
-    '--t1templatebrain="{HCPPIPEDIR_Templates}/MNI152_T1_0.7mm_brain.nii.gz" ' + \
+    '--t1template="{HCPPIPEDIR_Templates}/MNI152_T1_{t1_template_res:.1f}mm.nii.gz" ' + \
+    '--t1templatebrain="{HCPPIPEDIR_Templates}/MNI152_T1_{t1_template_res:.1f}mm_brain.nii.gz" ' + \
     '--t1template2mm="{HCPPIPEDIR_Templates}/MNI152_T1_2mm.nii.gz" ' + \
-    '--t2template="{HCPPIPEDIR_Templates}/MNI152_T2_0.7mm.nii.gz" ' + \
-    '--t2templatebrain="{HCPPIPEDIR_Templates}/MNI152_T2_0.7mm_brain.nii.gz" ' + \
+    '--t2template="{HCPPIPEDIR_Templates}/MNI152_T2_{t2_template_res:.1f}mm.nii.gz" ' + \
+    '--t2templatebrain="{HCPPIPEDIR_Templates}/MNI152_T2_{t2_template_res:.1f}mm_brain.nii.gz" ' + \
     '--t2template2mm="{HCPPIPEDIR_Templates}/MNI152_T2_2mm.nii.gz" ' + \
-    '--templatemask="{HCPPIPEDIR_Templates}/MNI152_T1_0.7mm_brain_mask.nii.gz" ' + \
+    '--templatemask="{HCPPIPEDIR_Templates}/MNI152_T1_{t1_template_res:.1f}mm_brain_mask.nii.gz" ' + \
     '--template2mmmask="{HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil.nii.gz" ' + \
     '--brainsize="150" ' + \
     '--fnirtconfig="{HCPPIPEDIR_Config}/T1_2_MNI152_2mm.cnf" ' + \
@@ -226,6 +226,15 @@ if args.analysis_level == "participant":
                                                extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
         assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
+
+        available_resolutions = [0.7, 0.8, 1.0]
+        t1_zooms = nibabel.load(t1ws[0]).get_header().get_zooms()
+        t1_res = float(min(t1_zooms[:3]))
+        t1_template_res = min(available_resolutions, key=lambda x:abs(x-t1_res))
+        t2_zooms = nibabel.load(t2ws[0]).get_header().get_zooms()
+        t2_res = float(min(t2_zooms[:3]))
+        t1_template_res = min(available_resolutions, key=lambda x:abs(x-t2_res))
+
         fieldmap_set = layout.get_fieldmap(t1ws[0])
         if fieldmap_set and fieldmap_set["type"] == "phasediff":
             merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
@@ -269,6 +278,8 @@ if args.analysis_level == "participant":
                                                 t1ws=t1ws,
                                                 t2ws=t2ws,
                                                 n_cpus=args.n_cpus,
+                                                t1_template_res=t1_template_res,
+                                                t2_template_res=t2_template_res
                                                 **fmap_args)),
                        ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,

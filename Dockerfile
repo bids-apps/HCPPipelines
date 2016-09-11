@@ -2,12 +2,11 @@ FROM ubuntu:14.04
 
 # Install FSL 5.0.9
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y --no-install-recommends curl && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
     apt-get update && \
-    apt-get remove -y curl && \
-    apt-get install -y fsl-core && \
+    apt-get install -y fsl-core-5.0 && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Configure environment
@@ -24,7 +23,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 
 # Install FreeSurfer
 RUN apt-get -y update \
-    && apt-get install -y wget && \
+    && apt-get install -y --no-install-recommends wget && \
     wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos4_x86_64-stable-pub-v5.3.0-HCP.tar.gz | tar zxv -C /opt \
     --exclude='freesurfer/trctrain' \
     --exclude='freesurfer/subjects/fsaverage_sym' \
@@ -39,8 +38,7 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get remove -y wget && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl  && \
+    apt-get install -y --no-install-recommends tcsh bc tar libgomp1 perl-modules curl  && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
@@ -69,14 +67,13 @@ ENV CARET7DIR=/usr/bin
 
 # Install HCP Pipelines
 RUN apt-get -y update \
-    && apt-get install -y wget python-numpy && \
+    && apt-get install -y --no-install-recommends python-numpy && \
     wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
     rm /pipelines.tar.gz && \
     cd / && \
-    apt-get remove -y wget && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
@@ -100,9 +97,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python-pip pyth
 RUN pip install https://github.com/chrisfilo/pybids/archive/0159116f0b9583ad1fec1ec36bae16ed949bf466.zip
 
 RUN apt-get update && \
-    apt-get install -y curl && \
     curl -sL https://deb.nodesource.com/setup_4.x | bash - && \
-    apt-get remove -y curl && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
