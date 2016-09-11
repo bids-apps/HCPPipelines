@@ -233,7 +233,7 @@ if args.analysis_level == "participant":
         t1_template_res = min(available_resolutions, key=lambda x:abs(x-t1_res))
         t2_zooms = nibabel.load(t2ws[0]).get_header().get_zooms()
         t2_res = float(min(t2_zooms[:3]))
-        t1_template_res = min(available_resolutions, key=lambda x:abs(x-t2_res))
+        t2_template_res = min(available_resolutions, key=lambda x:abs(x-t2_res))
 
         fieldmap_set = layout.get_fieldmap(t1ws[0])
         if fieldmap_set and fieldmap_set["type"] == "phasediff":
