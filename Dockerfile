@@ -1,10 +1,9 @@
-FROM debian:wheezy
+FROM ubuntu:14.04
 
-# Install FSL 5.0.6
+# Install FSL 5.0.9
 RUN apt-get update && \
     apt-get install -y curl && \
-    curl -sSL http://neuro.debian.net/lists/wheezy.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    sed -i 's/wheezy/wheezy-hcp500/' /etc/apt/sources.list.d/neurodebian.sources.list && \
+    curl -sSL http://neuro.debian.net/lists/trusty.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
     apt-get update && \
     apt-get remove -y curl && \
