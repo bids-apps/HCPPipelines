@@ -75,6 +75,28 @@ To run it in participant level mode (for one participant):
     bids/hcppipelines \
     /bids_dataset /outputs participant --participant_label 01 --license_key "XXXXXX"
 
+### Commercial use
+
+In addition to [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/) the following **non-free** Debian packages are part of this BIDS App:
+
+    non-free/science        fsl-5.0-core
+    non-free/science        fsl-5.0-eddy-nonfree
+    non-free/science        fsl-atlases
+    non-free/science        fsl-bangor-cerebellar-atlas
+    non-free/science        fsl-core
+    non-free/science        fsl-harvard-oxford-atlases
+    non-free/science        fsl-harvard-oxford-cortical-lateralized-atlas
+    non-free/science        fsl-jhu-dti-whitematter-atlas
+    non-free/science        fsl-juelich-histological-atlas
+    non-free/science        fsl-mni-structural-atlas
+    non-free/science        fsl-mni152-templates
+    non-free/science        fsl-oxford-striatal-atlas
+    non-free/science        fsl-oxford-thalamic-connectivity-atlas
+    non-free/science        fsl-resting-connectivity-parcellation-atlases
+    non-free/science        fsl-subthalamic-nucleus-atlas
+    non-free/science        fsl-talairach-daemon-atlas
+
+If you are considering commercial use of this App please consult the relevant licenses.
 
 ### TODO
 
