@@ -15,6 +15,7 @@ from collections import OrderedDict
 def run(command, env={}, cwd=None):
     merged_env = os.environ
     merged_env.update(env)
+    merged_env.pop("DEBUG", None)
     process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT,
                     shell=True, env=merged_env, cwd=cwd)
     while True:
