@@ -18,4 +18,4 @@ script:
   # print version
   - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset bids/${REPO_NAME,,} --version
   # participant level tests for single session dataset
-  - travis_wait 30 docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${REPO_NAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7"
+  - travis_wait docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${REPO_NAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7"
