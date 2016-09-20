@@ -9,7 +9,7 @@ services:
 
 before_install:
   - export REPO_NAME=$( echo $TRAVIS_REPO_SLUG | cut -d'/' -f2 )
-  - if [[ ! -d ~/data/hcp_example_bids ]]; then wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -P ${HOME}/downloads/ "https://googledrive.com/host/0B2JWN60ZLkgkMGlUY3B4MXZIZW8/hcp_example_bids.tar" && mkdir -p ${HOME}/data && tar xf ${HOME}/downloads/hcp_example_bids.tar -C ${HOME}/data; fi
+  - if [[ ! -d ~/data/hcp_example_bids ]]; then travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -P ${HOME}/downloads/ "https://googledrive.com/host/0B2JWN60ZLkgkMGlUY3B4MXZIZW8/hcp_example_bids.tar" && mkdir -p ${HOME}/data && tar xf ${HOME}/downloads/hcp_example_bids.tar -C ${HOME}/data; fi
   - git describe --tags > version
   - docker build -t bids/${REPO_NAME,,} .
   - mkdir -p ${HOME}/outputs
@@ -18,4 +18,4 @@ script:
   # print version
   - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset bids/${REPO_NAME,,} --version
   # participant level tests for single session dataset
-  - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${REPO_NAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7"
+  - travis_wait 30 docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${REPO_NAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7"
