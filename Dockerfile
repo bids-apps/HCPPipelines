@@ -57,6 +57,7 @@ ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN pip install https://github.com/chrisfilo/pybids/archive/0159116f0b9583ad1fec1ec36bae16ed949bf466.zip
+ENV PYTHONPATH=""
 
 RUN apt-get update && \
     curl -sL https://deb.nodesource.com/setup_4.x | bash - && \
