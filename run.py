@@ -53,17 +53,17 @@ def run_pre_freesurfer(**args):
     '--fmapmag="{fmapmag}" ' + \
     '--fmapphase="{fmapphase}" ' + \
     '--fmapgeneralelectric="NONE" ' + \
-    '--echodiff="{echodiff:.6f}" ' + \
-    '--SEPhaseNeg="NONE" ' + \
-    '--SEPhasePos="NONE" ' + \
-    '--echospacing="NONE" ' + \
-    '--seunwarpdir="NONE" ' + \
-    '--t1samplespacing="{t1samplespacing:.8f}" ' + \
-    '--t2samplespacing="{t2samplespacing:.8f}" ' + \
+    '--echodiff="{echodiff}" ' + \
+    '--SEPhaseNeg="{SEPhaseNeg}" ' + \
+    '--SEPhasePos="{SEPhasePos}" ' + \
+    '--echospacing="{echospacing}" ' + \
+    '--seunwarpdir="{seunwarpdir}" ' + \
+    '--t1samplespacing="{t1samplespacing}" ' + \
+    '--t2samplespacing="{t2samplespacing}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs="NONE" ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
-    '--topupconfig="NONE" ' + \
+    '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -237,41 +237,83 @@ if args.analysis_level == "participant":
         t2_template_res = min(available_resolutions, key=lambda x:abs(x-t2_res))
 
         fieldmap_set = layout.get_fieldmap(t1ws[0])
-        if fieldmap_set and fieldmap_set["type"] == "phasediff":
-            merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
-            run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
-            subject_label,
-            merged_file,
-            fieldmap_set["magnitude1"],
-            fieldmap_set["magnitude2"]))
+        fmap_args = {"fmapmag": "NONE",
+                     "fmapphase": "NONE",
+                     "echodiff": "NONE",
+                     "t1samplespacing": "NONE",
+                     "t2samplespacing": "NONE",
+                     "unwarpdir": "NONE",
+                     "avgrdcmethod": "NONE",
+                     "SEPhaseNeg": "NONE",
+                     "SEPhasePos": "NONE",
+                     "echospacing": "NONE",
+                     "seunwarpdir": "NONE"}
 
-            phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
-            te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
-            # HCP expects TE in miliseconds
-            te_diff = te_diff*1000.0
-
-            t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
-            t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
+        if fieldmap_set:
+            t1_spacing = layout.get_metadata(t1ws[0])["RealDwellTime"]
+            t2_spacing = layout.get_metadata(t2ws[0])["RealDwellTime"]
 
             unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
             if len(unwarpdir) == 2:
                 unwarpdir = "-" + unwarpdir[0]
-            fmap_args = {"fmapmag": merged_file,
-                         "fmapphase": fieldmap_set["phasediff"],
-                         "echodiff": te_diff,
-                         "t1samplespacing": t1_spacing,
-                         "t2samplespacing": t2_spacing,
-                         "unwarpdir": unwarpdir,
-                         "avgrdcmethod": "SiemensFieldMap"}
-        else: #TODO add support for GE and spin echo (TOPUP) fieldmaps
-            fmap_args = {"fmapmag": "NONE",
-                         "fmapphase": "NONE",
-                         "echodiff": "NONE",
-                         "t1samplespacing": "NONE",
-                         "t2samplespacing": "NONE",
-                         "unwarpdir": "NONE",
-                         "avgrdcmethod": "NONE"}
+
+            fmap_args.update({"t1samplespacing": "%.8f"%t1_spacing,
+                              "t2samplespacing": "%.8f"%t2_spacing,
+                              "unwarpdir": unwarpdir})
+
+            if fieldmap_set["type"] == "phasediff":
+                merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
+                run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
+                subject_label,
+                merged_file,
+                fieldmap_set["magnitude1"],
+                fieldmap_set["magnitude2"]))
+
+                phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
+                te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
+                # HCP expects TE in miliseconds
+                te_diff = te_diff*1000.0
+
+                fmap_args.update({"fmapmag": merged_file,
+                                  "fmapphase": fieldmap_set["phasediff"],
+                                  "echodiff": "%.6f"%te_diff,
+                                  "avgrdcmethod": "SiemensFieldMap"})
+            elif fieldmap_set["type"] == "epi":
+                SEPhaseNeg = None
+                SEPhasePos = None
+                for fieldmap in fieldmap_set["epi"]:
+                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                    if "-" in enc_dir:
+                        SEPhaseNeg = fieldmap
+                    else:
+                        SEPhasePos = fieldmap
+
+                seunwarpdir = layout.get_metadata(fieldmap_set["epi"][0])["PhaseEncodingDirection"]
+                seunwarpdir = seunwarpdir.replace("-", "").replace("i","x").replace("j", "y").replace("k", "z")
+
+                #TODO check consistency of echo spacing instead of assuming it's all the same
+                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"][0]):
+                    echospacing = layout.get_metadata(fieldmap_set["epi"][0])["EffectiveEchoSpacing"]
+                elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"][0]):
+                    # HCP Pipelines do not allow users to specify total readout time directly
+                    # Hence we need to reverse the calculations to provide echo spacing that would
+                    # result in the right total read out total read out time
+                    # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
+                    print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
+                    # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
+                    total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
+                    phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                    echospacing = TotalReadoutTime / float(phase_len - 1)
+                else:
+                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+
+                fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
+                                  "SEPhasePos": SEPhasePos,
+                                  "echospacing": "%.6f"%echospacing,
+                                  "seunwarpdir": seunwarpdir,
+                                  "avgrdcmethod": "TOPUP"})
+        #TODO add support for GE fieldmaps
 
         struct_stages_dict = OrderedDict([("PreFreeSurfer", partial(run_pre_freesurfer,
                                                 path=args.output_dir,
