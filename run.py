@@ -276,8 +276,8 @@ if args.analysis_level == "participant":
                 te_diff = te_diff*1000.0
 
                 fmap_args.update({"fmapmag": merged_file,
-                                  "fmapphase": "%.6f"%fieldmap_set["phasediff"],
-                                  "echodiff": te_diff,
+                                  "fmapphase": fieldmap_set["phasediff"],
+                                  "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
             elif fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
