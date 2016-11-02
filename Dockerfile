@@ -64,7 +64,7 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN npm install -g bids-validator
+RUN npm install -g bids-validator@0.19.2
 
 COPY run.py /run.py
 RUN chmod +x /run.py
