@@ -1,5 +1,5 @@
 ## HCP Pipelines BIDS App
-This a [BIDS App](https://bids-apps.neuroimging.io) wrapper for [HCP Pipelines](https://github.com/Washington-University/Pipelines).
+This a [BIDS App](https://bids-apps.neuroimaging.io) wrapper for [HCP Pipelines](https://github.com/Washington-University/Pipelines).
 Like every BIDS App it consists of a container that includes all of the dependencies and run script that parses a [BIDS dataset](http://bids.neuroimgaing.io).
 BIDS Apps run on Windows, Linux, Mac as well as HCPs/clusters.
 
