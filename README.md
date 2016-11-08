@@ -1,6 +1,6 @@
 ## HCP Pipelines BIDS App
 This a [BIDS App](https://bids-apps.neuroimaging.io) wrapper for [HCP Pipelines](https://github.com/Washington-University/Pipelines).
-Like every BIDS App it consists of a container that includes all of the dependencies and run script that parses a [BIDS dataset](http://bids.neuroimgaing.io).
+Like every BIDS App it consists of a container that includes all of the dependencies and run script that parses a [BIDS dataset](http://bids.neuroimaging.io).
 BIDS Apps run on Windows, Linux, Mac as well as HCPs/clusters.
 
 To convert DICOMs from your HCP-Style (CMRR) acquisitions to BIDS try using [heudiconv](https://github.com/nipy/heudiconv) with this [heuristic file](https://github.com/nipy/heudiconv/blob/master/heuristics/cmrr_heuristic.py).
