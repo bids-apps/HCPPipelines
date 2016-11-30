@@ -343,7 +343,7 @@ if args.analysis_level == "participant":
                                                 type='bold',
                                                 extensions=["nii.gz", "nii"])]
         for fmritcs in bolds:
-            fmriname = fmritcs.split("task-")[1].split("_")[0]
+            fmriname = "_".join(fmritcs.split("sub-")[-1].split("_")[1:]).split(".")[0]
             assert fmriname
 
             fmriscout = fmritcs.replace("_bold", "_sbref")
