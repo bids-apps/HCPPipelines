@@ -69,7 +69,7 @@ def run_pre_freesurfer(**args):
           '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
           '--printcom=""'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 def run_freesurfer(**args):
@@ -94,8 +94,8 @@ def run_freesurfer(**args):
         shutil.copytree(os.path.join(os.environ["SUBJECTS_DIR"], "rh.EC_average"),
                         os.path.join(args["subjectDIR"], "rh.EC_average"))
 
-    run(cmd, cwd=args["path"], env={"NSLOTS": str(args["n_cpus"]),
-                                    "OMP_NUM_THREADS": str(args["n_cpus"])})
+    # run(cmd, cwd=args["path"], env={"NSLOTS": str(args["n_cpus"]),
+    #                                 "OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 def run_post_freesurfer(**args):
@@ -114,7 +114,7 @@ def run_post_freesurfer(**args):
           '--regname="FS" ' + \
           '--printcom=""'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 def run_generic_fMRI_volume_processsing(**args):
@@ -141,7 +141,7 @@ def run_generic_fMRI_volume_processsing(**args):
           '--biascorrection={biascorrection} ' + \
           '--mctype="MCFLIRT"'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 def run_generic_fMRI_surface_processsing(**args):
@@ -157,7 +157,7 @@ def run_generic_fMRI_surface_processsing(**args):
           '--grayordinatesres="{grayordinatesres:s}" ' + \
           '--regname="FS"'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 def run_diffusion_processsing(**args):
@@ -449,7 +449,7 @@ if args.analysis_level == "participant":
                 y = ''.join(y)
                 dirnums.append(y)
             for dirnum in set(dirnums):
-                dwiname = "Diffusion" + "_acq-dir" + dirnum + "_run-" + session
+                dwiname = "Diffusion" + "_acq-dir" + dirnum + "_" + session
                 for acq in acqs:
                     if "AP" or "PA" in acqs:
                         PEdir = 2
