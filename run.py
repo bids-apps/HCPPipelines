@@ -167,7 +167,7 @@ def run_diffusion_processsing(**args):
       '--printcom=""'
     cmd = cmd.format(**args)
     print('\n',cmd, '\n')
-    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def generate_level1_fsf(**args):
     print(args)
