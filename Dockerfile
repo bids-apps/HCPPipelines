@@ -64,6 +64,19 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Install and compile dicm2niibatch
+RUN apt-get update && \
+    apt-get install unzip && \
+    wget https://github.com/rordenlab/dcm2niix/archive/master.zip && \
+    cd / && unzip /master.zip && \
+    cd dcm2niix-master
+
+RUN apt-get update && \
+    apt-get --assume-yes install pkg-config libyaml-cpp-dev libyaml-cpp0.5 cmake libboost-dev && \
+    mkdir build && cd build && \
+    cmake .. && \
+    make
+
 RUN npm install -g bids-validator@0.19.2
 
 COPY run.py /run.py
