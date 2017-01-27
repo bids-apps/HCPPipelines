@@ -79,7 +79,7 @@ ENV CARET7DIR=/usr/bin
 # Install HCP Pipelines
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
-    wget https://github.com/Washington-University/Pipelines/archive/v3.21.0.tar.gz -O pipelines.tar.gz && \
+    wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
