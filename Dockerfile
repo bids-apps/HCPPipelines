@@ -103,9 +103,9 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel && \
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN pip install https://github.com/INCF/pybids/archive/158dac2062dc6b5a4ab2f92090108eedc3387575.zip
+RUN pip install pybids
 ENV PYTHONPATH=""
 
 COPY run.py /run.py
