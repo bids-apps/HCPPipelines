@@ -305,7 +305,7 @@ if args.analysis_level == "participant":
                     phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
                     echospacing = total_readout_time / float(phase_len - 1)
                 else:
-                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
 
                 fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
                                   "SEPhasePos": SEPhasePos,
