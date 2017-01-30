@@ -138,7 +138,6 @@ def run_generic_fMRI_volume_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_surface_processsing(**args):
-    print(args)
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
       '--path={path} ' + \
@@ -250,8 +249,8 @@ if args.analysis_level == "participant":
                      "seunwarpdir": "NONE"}
 
         if fieldmap_set:
-            t1_spacing = layout.get_metadata(t1ws[0])["RealDwellTime"]
-            t2_spacing = layout.get_metadata(t2ws[0])["RealDwellTime"]
+            t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
+            t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
             unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
