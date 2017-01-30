@@ -21,7 +21,6 @@ def run(command, env={}, cwd=None):
     while True:
         line = process.stdout.readline()
         line = str(line)[:-1]
-        print(line)
         if line == '' and process.poll() != None:
             break
     if process.returncode != 0:
@@ -350,7 +349,6 @@ if args.analysis_level == "participant":
                 fmriscout = "NONE"
 
             fieldmap_set = layout.get_fieldmap(fmritcs)
-            print(fieldmap_set)
             if fieldmap_set and fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
