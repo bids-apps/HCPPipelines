@@ -303,7 +303,7 @@ if args.analysis_level == "participant":
                     # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
                     total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
                     phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
-                    echospacing = TotalReadoutTime / float(phase_len - 1)
+                    echospacing = total_readout_time / float(phase_len - 1)
                 else:
                     raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
 
