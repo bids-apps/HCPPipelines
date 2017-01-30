@@ -255,7 +255,7 @@ if args.analysis_level == "participant":
             unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
             if len(unwarpdir) == 2:
-                unwarpdir = "-" + unwarpdir[0]
+                unwarpdir = unwarpdir[0]+"-"
 
             fmap_args.update({"t1samplespacing": "%.8f"%t1_spacing,
                               "t2samplespacing": "%.8f"%t2_spacing,
