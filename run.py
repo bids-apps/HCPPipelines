@@ -16,10 +16,12 @@ def run(command, env={}, cwd=None):
     merged_env = os.environ
     merged_env.update(env)
     merged_env.pop("DEBUG", None)
+    print(command)
     process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT,
                     shell=True, env=merged_env, cwd=cwd)
     while True:
         line = process.stdout.readline()
+        print(line)
         line = str(line)[:-1]
         if line == '' and process.poll() != None:
             break
@@ -199,10 +201,9 @@ parser.add_argument('-v', '--version', action='version',
 
 args = parser.parse_args()
 
-#
-#
-#run("bids-validator " + args.bids_dir)
-print(os.listdir(args.bids_dir))
+
+
+run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
