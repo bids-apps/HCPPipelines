@@ -12,7 +12,6 @@ chmod +x /run.py
 
 # Make local folders
 mkdir /share
-mkdir /share/PI
 mkdir /scratch
 mkdir /local-scratch
 
