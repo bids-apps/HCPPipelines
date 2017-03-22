@@ -490,49 +490,45 @@ if args.analysis_level == "participant":
                 dirnums.append(y)
             for dirnum in set(dirnums):
                 dwiname = "Diffusion" + "_dir-" + dirnum + "_" + session + "_corr"
-                for acq in acqs:
-                    if "AP" or "PA" in acqs:
-                        PEdir = 2
-                    elif "LR" or "RL" in acqs:
-                        PEdir = 1
+
+                diracqs = [x for x in acqs if dirnum in x]
+                if "AP" or "PA" in diracqs:
+                    PEdir = 2
+                elif "LR" or "RL" in diracqs:
+                    PEdir = 1
+                else:
+                    RuntimeError("Acquisition direction not specified on dwi file")
+                pos = "EMPTY"
+                neg = "EMPTY"
+                gdcoeffs = "None"
+                dwis = layout.get(subject=subject_label,
+                                  type='dwi', acquisition=dirnum, run=session,
+                                  extensions=["nii.gz", "nii"])
+
+                assert len(dwis) <= 2
+                for dwi in dwis:
+                    dwi = dwi.filename
+                    if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
+                        neg = dwi
+                        # negData.append(neg)
                     else:
-                        RuntimeError("Acquisition direction not specified on dwi file")
-                    pos = "EMPTY"
-                    neg = "EMPTY"
-                    gdcoeffs = "None"
-                    dwis = layout.get(subject=subject_label,
-                                      type='dwi', acquisition=acq, run=session,
-                                      extensions=["nii.gz", "nii"])
-                    assert len(dwis) <= 2
-                    for dwi in dwis:
-                        dwi = dwi.filename
-                        if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
-                            neg = dwi
-                            negData.append(neg)
-                        else:
-                            pos = dwi
-                            posData.append(pos)
+                        pos = dwi
+                        # posData.append(pos)
 
-                # print(negData)
-                # print(posData)
-                # print(dwiname)
-
-                for posfile, negfile in zip(posData, negData):
-                    echospacing = layout.get_metadata(posfile)["EffectiveEchoSpacing"] * 1000
-                    dwi_stage_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
-                                                                                     posData=posfile,
-                                                                                     negData=negfile,
-                                                                                     path=args.output_dir,
-                                                                                     subject="sub-%s" % subject_label,
-                                                                                     echospacing=echospacing,
-                                                                                     PEdir=PEdir,
-                                                                                     gdcoeffs="NONE",
-                                                                                     dwiname=dwiname,
-                                                                                     n_cpus=args.n_cpus))])
-
-                    for stage, stage_func in dwi_stage_dict.iteritems():
-                        if stage in args.stages:
-                            stage_func()
+                echospacing = layout.get_metadata(pos)["EffectiveEchoSpacing"] * 1000
+                dwi_stage_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
+                                                                                 posData=pos,
+                                                                                 negData=neg,
+                                                                                 path=args.output_dir,
+                                                                                 subject="sub-%s" % subject_label,
+                                                                                 echospacing=echospacing,
+                                                                                 PEdir=PEdir,
+                                                                                 gdcoeffs="NONE",
+                                                                                 dwiname=dwiname,
+                                                                                 n_cpus=args.n_cpus))])
+                for stage, stage_func in dwi_stage_dict.iteritems():
+                    if stage in args.stages:
+                        stage_func()
 
 
 
