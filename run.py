@@ -138,7 +138,7 @@ def run_generic_fMRI_volume_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_surface_processsing(**args):
-    print(args)
+    # print(args)
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
       '--path={path} ' + \
@@ -169,56 +169,6 @@ def run_diffusion_processsing(**args):
     print('\n',cmd, '\n')
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
-def generate_level1_fsf(**args):
-    print(args)
-    args.update(os.environ)
-    cmd = '{HCPPIPEDIR}/Examples/Scripts/generate_level_1_fsf_dev.sh ' + \
-        '--studyfolder={studyfolder} ' + \
-        '--subject={subject} ' + \
-        '--taskname={taskname} ' + \
-        '--templatedir={HCPPIPEDIR}/{templatedir} ' + \
-        '--outdir={outdir} ' + \
-        '--dir={dir}'
-    cmd = cmd.format(**args)
-    print('\n', cmd, '\n')
-    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
-
-def generate_level2_fsf(**args):
-    print(args)
-    args.update(os.environ)
-    cmd = '{HCPPIPEDIR}/Examples/Scripts/generate_level_2_fsf_dev.sh ' + \
-        '--studyfolder={studyfolder} ' + \
-        '--subject={subject} ' + \
-        '--taskname={taskname} ' + \
-        '--templatedir={HCPPIPEDIR}/{templatedir} ' + \
-        '--outdir={outdir} '
-    cmd = cmd.format(**args)
-    print('\n', cmd, '\n')
-    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
-
-def run_task_fmri_analysis(**args):
-    print(args)
-    args.update(os.environ)
-    cmd = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh ' + \
-        '--path={path} ' + \
-        '--subject={subject} ' + \
-        '--lvl1tasks={lvl1tasks} ' + \
-        '--lvl1fsfs={lvl1fsfs} ' + \
-        '--lvl2task={lvl2task} ' + \
-        '--lvl2fsf={lvl2fsf} ' + \
-        '--lowresmesh={lowresmesh} ' + \
-        '--grayordinatesres="{grayordinatesres:s}" ' + \
-        '--confound={confound} ' + \
-        '--finalsmoothingFWHM={finalsmoothingFWHM} ' + \
-        '--temporalfilter={temporalfilter} ' + \
-        '--vba={vba} ' + \
-        '--regname={regname} ' + \
-        '--parcellation={parcellation} ' + \
-        '--parcellationfile={parcellationfile} ' + \
-        '--printcom=""'
-    cmd = cmd.format(**args)
-    print('\n', cmd, '\n')
-    # run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 __version__ = open('/version').read()
 
@@ -464,45 +414,56 @@ if args.analysis_level == "participant":
                 if stage in args.stages:
                     stage_func()
 
-        # dwis = layout.get(subject=subject_label, type='dwi',
-        #                                          extensions=["nii.gz", "nii"])
-
-        # print(dwis)
-
         posData = []
         negData = []
         PEdir = "None"
         dwiname = "Diffusion"
         dirnums = []
 
+        dmris = [f.filename for f in layout.get(subject=subject_label,
+                                                type='dwi',
+                                                extensions=["nii.gz", "nii"])]
+
+        bvals = [f.filename for f in layout.get(subject=subject_label,
+                                                type='dwi',
+                                                extensions=["bval"])]
+
         numruns = set(layout.get(target='run', return_type='id',
                                  subject=subject_label, type='dwi',
                                  extensions=["nii.gz", "nii"]))
 
-        for session in numruns:
-            acqs = set(layout.get(target='acquisition', return_type='id',
-                                  subject=subject_label, type='dwi',
-                                  extensions=["nii.gz", "nii"]))
-            for acq in acqs:
-                y = [int(s) for s in acq[0:len(acq)] if s.isdigit()]
-                y = [str(s) for s in y]
-                y = ''.join(y)
-                dirnums.append(y)
-            for dirnum in set(dirnums):
-                dwiname = "Diffusion" + "_dir-" + dirnum + "_" + session + "_corr"
+        for bval in bvals:
+            with open(bval) as f:
+                bvalues = [bvalue for line in f for bvalue in line.split()]
+                dirnums.append(len(bvalues)-1)
 
-                diracqs = [x for x in acqs if dirnum in x]
-                if "AP" or "PA" in diracqs:
+
+        for session in numruns:
+            acqs = set([layout.get_metadata(f)["PhaseEncodingDirection"] for f in dmris])
+            # acqs = set(layout.get(target='acquisition', return_type='id',
+            #                       subject=subject_label, type='dwi',
+            #                       extensions=["nii.gz", "nii"]))
+
+            # for acq in acqs:
+            #     y = [int(s) for s in acq[0:len(acq)] if s.isdigit()]
+            #     y = [str(s) for s in y]
+            #     y = ''.join(y)
+            #     dirnums.append(y)
+            for dirnum in set(dirnums):
+                dwiname = "Diffusion" + "_dir-" + str(dirnum) + "_" + session + "_corr"
+
+                # diracqs = [x for x in acqs if dirnum in x]
+                if "j" in acqs:
                     PEdir = 2
-                elif "LR" or "RL" in diracqs:
+                elif "i" in acqs:
                     PEdir = 1
                 else:
-                    RuntimeError("Acquisition direction not specified on dwi file")
+                    RuntimeError("Phase encoding direction not specified for diffusion data.")
                 pos = "EMPTY"
                 neg = "EMPTY"
                 gdcoeffs = "None"
                 dwis = layout.get(subject=subject_label,
-                                  type='dwi', acquisition=dirnum, run=session,
+                                  type='dwi', acquisition=str(dirnum), run=session,
                                   extensions=["nii.gz", "nii"])
 
                 assert len(dwis) <= 2
@@ -510,25 +471,25 @@ if args.analysis_level == "participant":
                     dwi = dwi.filename
                     if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
                         neg = dwi
-                        # negData.append(neg)
                     else:
                         pos = dwi
-                        # posData.append(pos)
 
-                echospacing = layout.get_metadata(pos)["EffectiveEchoSpacing"] * 1000
-                dwi_stage_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
-                                                                                 posData=pos,
-                                                                                 negData=neg,
-                                                                                 path=args.output_dir,
-                                                                                 subject="sub-%s" % subject_label,
-                                                                                 echospacing=echospacing,
-                                                                                 PEdir=PEdir,
-                                                                                 gdcoeffs="NONE",
-                                                                                 dwiname=dwiname,
-                                                                                 n_cpus=args.n_cpus))])
-                for stage, stage_func in dwi_stage_dict.iteritems():
-                    if stage in args.stages:
-                        stage_func()
-
+                try:
+                    echospacing = layout.get_metadata(pos)["EffectiveEchoSpacing"] * 1000
+                    dwi_stage_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
+                                                                                     posData=pos,
+                                                                                     negData=neg,
+                                                                                     path=args.output_dir,
+                                                                                     subject="sub-%s" % subject_label,
+                                                                                     echospacing=echospacing,
+                                                                                     PEdir=PEdir,
+                                                                                     gdcoeffs="NONE",
+                                                                                     dwiname=dwiname,
+                                                                                     n_cpus=args.n_cpus))])
+                    for stage, stage_func in dwi_stage_dict.iteritems():
+                        if stage in args.stages:
+                            stage_func()
+                except:
+                    print("You may be missing a diffusion data set with positive phase encoding direction.")
 
 
