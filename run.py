@@ -16,12 +16,13 @@ def run(command, env={}, cwd=None):
     merged_env = os.environ
     merged_env.update(env)
     merged_env.pop("DEBUG", None)
+    print(command)
     process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT,
                     shell=True, env=merged_env, cwd=cwd)
     while True:
         line = process.stdout.readline()
-        line = str(line)[:-1]
         print(line)
+        line = str(line)[:-1]
         if line == '' and process.poll() != None:
             break
     if process.returncode != 0:
@@ -138,7 +139,6 @@ def run_generic_fMRI_volume_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_generic_fMRI_surface_processsing(**args):
-    print(args)
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh ' + \
       '--path={path} ' + \
@@ -201,8 +201,8 @@ parser.add_argument('-v', '--version', action='version',
 
 args = parser.parse_args()
 
-#
-#
+
+
 run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
@@ -250,13 +250,13 @@ if args.analysis_level == "participant":
                      "seunwarpdir": "NONE"}
 
         if fieldmap_set:
-            t1_spacing = layout.get_metadata(t1ws[0])["RealDwellTime"]
-            t2_spacing = layout.get_metadata(t2ws[0])["RealDwellTime"]
+            t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
+            t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
             unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
             unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
             if len(unwarpdir) == 2:
-                unwarpdir = "-" + unwarpdir[0]
+                unwarpdir = unwarpdir[0]+"-"
 
             fmap_args.update({"t1samplespacing": "%.8f"%t1_spacing,
                               "t2samplespacing": "%.8f"%t2_spacing,
@@ -304,9 +304,9 @@ if args.analysis_level == "participant":
                     # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
                     total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
                     phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
-                    echospacing = TotalReadoutTime / float(phase_len - 1)
+                    echospacing = total_readout_time / float(phase_len - 1)
                 else:
-                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
 
                 fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
                                   "SEPhasePos": SEPhasePos,
@@ -351,7 +351,6 @@ if args.analysis_level == "participant":
                 fmriscout = "NONE"
 
             fieldmap_set = layout.get_fieldmap(fmritcs)
-            print(fieldmap_set)
             if fieldmap_set and fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
