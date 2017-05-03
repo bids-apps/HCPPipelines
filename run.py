@@ -194,7 +194,7 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                                        'fMRISurface', 'DiffusionPreprocessing'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface',
-                            'DiffusionPreprocessing', 'TaskfMRIAnalysis'])
+                            'DiffusionPreprocessing'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -426,18 +426,21 @@ if args.analysis_level == "participant":
             onerun= True
             numruns = {'run-01'}
         if numruns:
-            for session in numruns:
+            for numrun in numruns:
                 if not onerun:
                     bvals = [f.filename for f in layout.get(subject=subject_label,
-                                                            type='dwi', run=session,
+                                                            type='dwi', run=numrun,
                                                             extensions=["bval"])]
                 else:
                     bvals = [f.filename for f in layout.get(subject=subject_label,
                                                             type='dwi', extensions=["bval"])]
+                ## find number of directions by reading bval files, then create dictionary with corresponding
+                # bval file name, number of directions, dwi image file name, and phase encoding direction (i or j).
                 dwi_dict = {'bvalFile':[], 'bval':[], 'dwiFile':[], 'direction':[]}
-                for bvalfile in bvals:
-                    with open(bvalfile) as f: # get number of directions
+                for bvalfile in bvals: # fine number of directions
+                    with open(bvalfile) as f:
                         bvalues = [bvalue for line in f for bvalue in line.split()]
+                    # fill in the rest of dictionary
                     dwi_dict['bvalFile'].append(bvalfile)
                     dwi_dict['bval'].append(len(bvalues) - 1)
                     dwiFile = glob(os.path.join(os.path.dirname(bvalfile),'{0}.nii*'.format(os.path.basename(bvalfile).split('.')[0]))) # ensures bval file has same name as dwi file
@@ -447,15 +450,18 @@ if args.analysis_level == "participant":
 
                 # check if length of lists in dictionary are the same
                 n = len(dwi_dict['bvalFile'])
-                assert all(len(dwi_dict[k]) for k,v in dwi_dict.items())
+                assert all(len(dwi_dict[k]) == n for k,v in dwi_dict.items())
 
                 for dirnum in set(dwi_dict['bval']):
+                    ## the following statement extracts index values in dwi_dict['bval'] if the value matches
+                    # "dirnum", which is the number of directions (i.e. 98 or 99). These index values are used
+                    # to find the corresponding PE directions, dwi file names, etc. in the dictionary
                     idxs = { i for k,v in dwi_dict.iteritems() for i in range(0,len(dwi_dict['bval'])) if v[i] == dirnum }
                     PEdirNums = set([dwi_dict['direction'][i] for i in idxs])
                     for PEdirNum in PEdirNums:
                         dwis = [ dwi_dict['dwiFile'][i] for i in idxs if dwi_dict['direction'][i] == PEdirNum ]
                         assert len(dwis) <= 2
-                        dwiname = "Diffusion" + "_dir-" + str(dirnum) + "_" + session + "_corr_" + str(PEdirNum)
+                        dwiname = "Diffusion" + "_dir-" + str(dirnum) + "_" + numrun + "_corr_" + str(PEdirNum)
                         if "j" in PEdirNum:
                             PEdir = 2
                         elif "i" in PEdirNum:
@@ -485,6 +491,6 @@ if args.analysis_level == "participant":
                             for stage, stage_func in dwi_stage_dict.iteritems():
                                 if stage in args.stages:
                                     stage_func()
-                        except:
+                        except NameError:
                             print("You may have missing diffusion data in the positive phase encoding direction.")
 
