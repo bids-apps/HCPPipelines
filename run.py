@@ -437,7 +437,7 @@ if args.analysis_level == "participant":
                 ## find number of directions by reading bval files, then create dictionary with corresponding
                 # bval file name, number of directions, dwi image file name, and phase encoding direction (i or j).
                 dwi_dict = {'bvalFile':[], 'bval':[], 'dwiFile':[], 'direction':[]}
-                for bvalfile in bvals: # fine number of directions
+                for bvalfile in bvals: # find number of directions
                     with open(bvalfile) as f:
                         bvalues = [bvalue for line in f for bvalue in line.split()]
                     # fill in the rest of dictionary
