@@ -55,7 +55,7 @@ RUN apt-get update && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
     apt-get update && \
-    apt-get install -y fsl-core=5.0.9-3~nd14.04+1 && \
+    apt-get install -y fsl-core=5.0.9-1~nd+1+nd16.04+1 && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Configure environment
@@ -72,7 +72,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
 # Install Connectome Workbench
-RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
+RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd16.04+1
 
 ENV CARET7DIR=/usr/bin
 
