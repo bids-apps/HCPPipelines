@@ -11,7 +11,8 @@ shell scripts) for processing MRI images for the [Human Connectome Project][HCP]
 Among other things, these tools implement the Minimal Preprocessing Pipeline
 (MPP) described in [Glasser et al. 2013][GlasserEtAl].
 
-**This BIDS App requires that each subject has at least one T1w and one T2w scan.** Lack of fieldmaps, or fMRI scans is handled robustly.
+**This BIDS App requires that each subject has at least one T1w and one T2w scan.** Lack fMRI or dMRI scans is handled robustly.  Note that while anatomicals (T1w, T2w scans) can be processed without a fieldmap, a fieldmap is mandatory for processing fMRI scans.
+
 
 ### Documentation
 [Release Notes, Installation, and Usage][release-install-use]

@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: joke/hcppipelines
+From: bids/hcppipelines
 
 %runscript
 
