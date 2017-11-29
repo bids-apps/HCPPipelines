@@ -168,7 +168,7 @@ def run_diffusion_processsing(**args):
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
+parser = argparse.ArgumentParser(description='HCP Pipelines BIDS App (T1w, T2w, fMRI, DWI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
@@ -197,7 +197,7 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
 
 args = parser.parse_args()
 
@@ -440,7 +440,7 @@ if args.analysis_level == "participant":
         negdata = "@".join(neg)
 
         dif_stages_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
-                                                 path=os.path.join(args.bids_dir,"sub-%s"%subject_label),
+                                                 path=args.output_dir,
                                                  subject="sub-%s"%subject_label,
                                                  posData=posdata,
                                                  negData=negdata,
