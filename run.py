@@ -444,7 +444,7 @@ if args.analysis_level == "participant":
                                                  subject="sub-%s"%subject_label,
                                                  posData=posdata,
                                                  negData=negdata,
-                                                 echospacing=echospacing,
+                                                 echospacing=echospacing * 1000.,
                                                  n_cpus=args.n_cpus,
                                                  PEdir=PEdir))
                        ])
