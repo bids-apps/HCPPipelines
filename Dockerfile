@@ -111,5 +111,9 @@ ENV PYTHONPATH=""
 COPY run.py /run.py
 RUN chmod +x /run.py
 
+RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_cuda7.5 > $FSLDIR/bin/eddy_cuda
+RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_openmp > $FSLDIR/bin/eddy_openmp
+RUN chmod 775 $FSLDIR/bin/eddy_*
+
 COPY version /version
 ENTRYPOINT ["/run.py"]
