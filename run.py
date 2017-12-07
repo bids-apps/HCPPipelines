@@ -162,6 +162,7 @@ def run_diffusion_processsing(**args):
       '--echospacing="{echospacing}" '+ \
       '--PEdir={PEdir} ' + \
       '--gdcoeffs="NONE" ' + \
+      '--extra-eddy-arg="--data_is_shelled" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
