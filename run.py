@@ -163,6 +163,7 @@ def run_diffusion_processsing(**args):
       '--PEdir={PEdir} ' + \
       '--gdcoeffs="NONE" ' + \
       '--extra-eddy-arg="--data_is_shelled" ' + \
+      '--no-gpu ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -204,7 +205,7 @@ args = parser.parse_args()
 
 
 
-run("bids-validator " + args.bids_dir)
+#run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
@@ -237,7 +238,7 @@ if args.analysis_level == "participant":
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
-        fieldmap_set = layout.get_fieldmap(t1ws[0])
+        fieldmap_set = layout.get_fieldmap(t1ws[0],return_list=True)
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
                      "echodiff": "NONE",
@@ -445,7 +446,7 @@ if args.analysis_level == "participant":
                                                  subject="sub-%s"%subject_label,
                                                  posData=posdata,
                                                  negData=negdata,
-                                                 echospacing=echospacing * 1000.,
+                                                 echospacing=echospacing,
                                                  n_cpus=args.n_cpus,
                                                  PEdir=PEdir))
                        ])
