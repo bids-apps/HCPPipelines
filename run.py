@@ -433,8 +433,8 @@ if args.analysis_level == "participant":
                 pos.append(dwi.filename)
             # get echospacing
             if not echospacing:
-                echospacing = metadata['EffectiveEchoSpacing']
-            if echospacing != metadata['EffectiveEchoSpacing']:
+                echospacing = metadata['EffectiveEchoSpacing']*1000.
+            if echospacing != metadata['EffectiveEchoSpacing']*1000.:
                 raise RuntimeError("Not all dwi images have the same echo spacing. Not implemented.")
 
         posdata = "@".join(pos)
