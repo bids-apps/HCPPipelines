@@ -252,7 +252,10 @@ if args.analysis_level == "participant":
                      "seunwarpdir": "NONE"}
 
         if fieldmap_set:
-            fieldmap_trans = dict(zip(fieldmap_set[0],zip(*[d.values() for d in fieldmap_set])))
+            if len(fieldmap_set)>1:
+                fieldmap_trans = dict(zip(fieldmap_set[0],zip(*[d.values() for d in fieldmap_set])))
+            else:
+                fieldmap_trans = {k:[v] for k,v in fieldmap_set[0].iteritems()}
 
             t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
             t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
@@ -271,10 +274,10 @@ if args.analysis_level == "participant":
                 run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
                 subject_label,
                 merged_file,
-                fieldmap_trans["magnitude1"],
-                fieldmap_trans["magnitude2"]))
+                " ".join(fieldmap_trans["magnitude1"]),
+                " ".join(fieldmap_trans["magnitude2"])))
 
-                phasediff_metadata = layout.get_metadata(fieldmap_trans["phasediff"])
+                phasediff_metadata = layout.get_metadata(fieldmap_trans["phasediff"][0])
                 te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
                 # HCP expects TE in miliseconds
                 te_diff = te_diff*1000.0
