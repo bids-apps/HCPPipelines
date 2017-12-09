@@ -283,7 +283,7 @@ if args.analysis_level == "participant":
                 te_diff = te_diff*1000.0
 
                 fmap_args.update({"fmapmag": merged_file,
-                                  "fmapphase": fieldmap_trans["phasediff"],
+                                  "fmapphase": fieldmap_trans["phasediff"][0],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
 
@@ -301,6 +301,8 @@ if args.analysis_level == "participant":
                 unwarpdir = enc_dir.replace("-", "").replace("i","x").replace("j", "y").replace("k", "z")
                 if seunwarpdir and not seunwarpdir == unwarpdir:
                     raise RuntimeError("Inconsistent unwarp directions.")
+                else:
+                    seunwarpdir = copy.deepcopy(unwarpdir)
 
                 fmap_arguments = {}
                 for fieldmap in fieldmap_set:
