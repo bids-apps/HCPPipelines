@@ -4,6 +4,7 @@ import argparse
 import os
 import shutil
 import nibabel
+import copy
 from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
