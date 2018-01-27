@@ -6,8 +6,7 @@ RUN apt-get update && \
     apt-get install -y curl && \
     curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
     apt-get remove -y curl && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get install -y nodejs
 
 RUN npm install -g bids-validator@0.19.2
 
@@ -28,8 +27,7 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl  && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get install -y tcsh bc tar libgomp1 perl-modules curl 
 
 # Set up the environment
 ENV OS Linux
@@ -55,8 +53,7 @@ RUN apt-get update && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
     apt-get update && \
-    apt-get install -y fsl-core=5.0.9-4~nd14.04+1 && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get install -y fsl-core=5.0.9-4~nd14.04+1
 
 # Configure environment
 ENV FSLDIR=/usr/share/fsl/5.0
@@ -84,8 +81,7 @@ RUN apt-get -y update \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
     rm /pipelines.tar.gz && \
-    cd / && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    cd / 
 
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
 ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates
@@ -103,8 +99,7 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
 RUN pip install pybids==0.0.1
 ENV PYTHONPATH=""
 
