@@ -9,7 +9,7 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN npm install -g bids-validator@0.24.00
+RUN npm install -g bids-validator@0.25.07
 
 # Download FreeSurfer
 RUN apt-get -y update \
