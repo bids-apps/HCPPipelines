@@ -51,7 +51,7 @@ ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:
 
 # Install FSL 5.0.10
 RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
-    python fslinstaller.py -d /usr/local/fsl -D && \
+    python fslinstaller.py -d /usr/local/fsl && \
     chmod +x $FSLDIR/etc/fslconf/fsl.sh && \
     $FSLDIR/etc/fslconf/fsl.sh
 
@@ -97,7 +97,7 @@ ENV HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts
 ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
-ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+ENV MSMBINDIR=${FSLDIR}/bin/
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
