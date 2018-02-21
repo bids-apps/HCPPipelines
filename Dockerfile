@@ -6,8 +6,7 @@ RUN apt-get update && \
     apt-get install -y curl && \
     curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
     apt-get remove -y curl && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get install -y nodejs
 
 RUN npm install -g bids-validator@0.25.07
 
@@ -28,8 +27,7 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl  && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get install -y tcsh bc tar libgomp1 perl-modules curl
 
 # Set up the environment
 ENV OS Linux
@@ -52,8 +50,8 @@ ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:
 # Install FSL 5.0.10
 RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
     python fslinstaller.py -d /usr/local/fsl && \
-    chmod +x $FSLDIR/etc/fslconf/fsl.sh && \
-    $FSLDIR/etc/fslconf/fsl.sh
+    chmod +x $/usr/local/fsl/etc/fslconf/fsl.sh && \
+    /usr/local/fsl/etc/fslconf/fsl.sh
 
 ENV FSLDIR=/usr/local/fsl
 ENV PATH=$FSLDIR/bin:$PATH
@@ -80,8 +78,7 @@ RUN apt-get -y update \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
     rm /pipelines.tar.gz && \
-    cd / && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    cd /
 
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
 ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates
@@ -99,8 +96,7 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBINDIR=${FSLDIR}/bin/
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.4.2
 ENV PYTHONPATH=""
 
