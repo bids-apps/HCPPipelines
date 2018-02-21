@@ -49,27 +49,23 @@ ENV PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
 ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
 ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 
-# Install FSL 5.0.9
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-    apt-get update && \
-    apt-get install -y fsl-core=5.0.9-4~nd14.04+1 && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install FSL 5.0.10
+RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
+    python fslinstaller.py -d /usr/local/fsl -D && \
+    chmod +x $FSLDIR/etc/fslconf/fsl.sh && \
+    $FSLDIR/etc/fslconf/fsl.sh
 
-# Configure environment
-ENV FSLDIR=/usr/share/fsl/5.0
+ENV FSLDIR=/usr/local/fsl
+ENV PATH=$FSLDIR/bin:$PATH
 ENV FSL_DIR="${FSLDIR}"
 ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV PATH=/usr/lib/fsl/5.0:$PATH
+ENV PATH=$FSLDIR:$PATH
 ENV FSLMULTIFILEQUIT=TRUE
-ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
+ENV POSSUMDIR=$FSLDIR
+ENV LD_LIBRARY_PATH=$FSLDIR:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
-RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
 # Install Connectome Workbench
 RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
@@ -110,10 +106,6 @@ ENV PYTHONPATH=""
 
 COPY run.py /run.py
 RUN chmod +x /run.py
-
-RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_cuda7.5 > $FSLDIR/bin/eddy_cuda
-RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_openmp > $FSLDIR/bin/eddy_openmp
-RUN chmod 775 $FSLDIR/bin/eddy_*
 
 COPY version /version
 ENTRYPOINT ["/run.py"]
