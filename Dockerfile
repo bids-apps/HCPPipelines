@@ -64,6 +64,7 @@ ENV LD_LIBRARY_PATH=$FSLDIR:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
+
 ENV MSMBINDIR=${FSLDIR}/bin/
 
 # Install Connectome Workbench
