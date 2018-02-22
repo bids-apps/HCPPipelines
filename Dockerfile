@@ -50,7 +50,7 @@ ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:
 # Install FSL 5.0.10
 RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
     python fslinstaller.py -d /usr/local/fsl && \
-    chmod +x $/usr/local/fsl/etc/fslconf/fsl.sh && \
+    chmod +x /usr/local/fsl/etc/fslconf/fsl.sh && \
     /usr/local/fsl/etc/fslconf/fsl.sh
 
 ENV FSLDIR=/usr/local/fsl
@@ -64,9 +64,15 @@ ENV LD_LIBRARY_PATH=$FSLDIR:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV MSMBINDIR=${FSLDIR}/bin/
 
 # Install Connectome Workbench
-RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
+    apt-get update && \
+    apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 
 ENV CARET7DIR=/usr/bin
 
@@ -94,7 +100,6 @@ ENV HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts
 ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
-ENV MSMBINDIR=${FSLDIR}/bin/
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.4.2
