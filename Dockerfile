@@ -101,6 +101,7 @@ ENV HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts
 ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
+ENV MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.4.2
