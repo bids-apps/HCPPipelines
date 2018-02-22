@@ -48,8 +48,9 @@ ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
 ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 
 # Install FSL 5.0.10
-RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
-    python fslinstaller.py -d /usr/local/fsl && \
+RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py
+
+RUN python fslinstaller.py -d /usr/local/fsl && \
     chmod +x /usr/local/fsl/etc/fslconf/fsl.sh && \
     /usr/local/fsl/etc/fslconf/fsl.sh
 
@@ -64,20 +65,20 @@ ENV LD_LIBRARY_PATH=$FSLDIR:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
-
 ENV MSMBINDIR=${FSLDIR}/bin/
 
-# Install Connectome Workbench
+# Install connectome workbench (latest dev)
+RUN wget http://brainvis.wustl.edu/workbench/workbench-source-dev_latest.zip
+RUN apt-get install -y zip unzip cmake
+RUN unzip workbench-source-dev_latest.zip
+RUN mkdir build
+WORKDIR build
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-    apt-get update && \
-    apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
-
-ENV CARET7DIR=/usr/bin
+    apt-get install -y build-essential openssl libssl-dev libcurl4-openssl-dev g++ qtdeclarative5-dev
+RUN cmake -D CMAKE_BUILD_TYPE=Release -D WORKBENCH_MESA_DIR=/usr -D WORKBENCH_USE_QT5=TRUE ../workbench/workbench_source/src
 
 # Install HCP Pipelines
+WORKDIR /
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
     wget https://github.com/jokedurnez/Pipelines/archive/v3.23.0-jd.tar.gz -O pipelines.tar.gz && \
