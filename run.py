@@ -65,8 +65,7 @@ def run_pre_freesurfer(**args):
     '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs="NONE" ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
-    '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
-    '--printcom=""'
+    '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -78,8 +77,7 @@ def run_freesurfer(**args):
       '--subjectDIR="{subjectDIR}" ' + \
       '--t1="{path}/{subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
       '--t1brain="{path}/{subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
-      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
-      '--printcom=""'
+      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" '
     cmd = cmd.format(**args)
 
     if not os.path.exists(os.path.join(args["subjectDIR"], "fsaverage")):
@@ -108,8 +106,7 @@ def run_post_freesurfer(**args):
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
-      '--regname="FS" ' + \
-      '--printcom=""'
+      '--regname="FS" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -133,7 +130,6 @@ def run_generic_fMRI_volume_processsing(**args):
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
-      '--printcom="" ' + \
       '--biascorrection={biascorrection} ' + \
       '--mctype="MCFLIRT"'
     cmd = cmd.format(**args)
@@ -164,8 +160,7 @@ def run_diffusion_processsing(**args):
       '--PEdir={PEdir} ' + \
       '--gdcoeffs="NONE" ' + \
       '--extra-eddy-arg="--data_is_shelled" ' + \
-      '--no-gpu ' + \
-      '--printcom=""'
+      '--no-gpu '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
