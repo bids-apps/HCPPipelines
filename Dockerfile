@@ -1,5 +1,5 @@
-# Use Ubuntu 14.04 LTS
-FROM ubuntu:trusty-20170119
+# Use Ubuntu 17.10 LTS
+FROM ubuntu:16.04
 
 ## Install the validator
 RUN apt-get update && \
@@ -13,7 +13,7 @@ RUN npm install -g bids-validator@0.25.07
 # Download FreeSurfer
 RUN apt-get -y update \
     && apt-get install -y wget && \
-    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos4_x86_64-stable-pub-v5.3.0-HCP.tar.gz | tar zxv -C /opt \
+    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz | tar zxv -C /opt \
     --exclude='freesurfer/trctrain' \
     --exclude='freesurfer/subjects/fsaverage_sym' \
     --exclude='freesurfer/subjects/fsaverage3' \
@@ -66,22 +66,20 @@ ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV MSMBINDIR=${FSLDIR}/bin/
+RUN chmod 770 -R $FSLDIR
 
-# Install connectome workbench (latest dev)
-RUN wget http://brainvis.wustl.edu/workbench/workbench-source-dev_latest.zip
-RUN apt-get install -y zip unzip cmake
-RUN unzip workbench-source-dev_latest.zip
-RUN mkdir build
-WORKDIR build
 RUN apt-get update && \
-    apt-get install -y build-essential openssl libssl-dev libcurl4-openssl-dev g++ qtdeclarative5-dev
-RUN cmake -D CMAKE_BUILD_TYPE=Release -D WORKBENCH_MESA_DIR=/usr -D WORKBENCH_USE_QT5=TRUE ../workbench/workbench_source/src
+    apt-get install -y --no-install-recommends curl && \
+    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
+    apt-get update && \
+    apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 
 # Install HCP Pipelines
 WORKDIR /
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
-    wget https://github.com/jokedurnez/Pipelines/archive/v3.23.0-jd.tar.gz -O pipelines.tar.gz && \
+    wget https://github.com/jokedurnez/Pipelines/archive/v3.25.0-jd.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
