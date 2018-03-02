@@ -13,7 +13,7 @@ RUN npm install -g bids-validator@0.25.07
 # Download FreeSurfer
 RUN apt-get -y update \
     && apt-get install -y wget && \
-    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos4_x86_64-stable-pub-v5.3.0-HCP.tar.gz | tar zxv -C /opt \
+    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz | tar zxv -C /opt \
     --exclude='freesurfer/trctrain' \
     --exclude='freesurfer/subjects/fsaverage_sym' \
     --exclude='freesurfer/subjects/fsaverage3' \
@@ -28,7 +28,6 @@ RUN apt-get -y update \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
     apt-get install -y tcsh bc tar libgomp1 perl-modules curl
-
 # Set up the environment
 ENV OS Linux
 ENV FS_OVERRIDE 0
@@ -106,6 +105,10 @@ ENV CARET7DIR=/usr/bin
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.4.2
 ENV PYTHONPATH=""
+
+WORKDIR /opt/freesurfer/bin
+RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/d26114a201333f812d2cef67a338e2685c004d00/scripts/recon-all.v6.hires && \
+    chmod +x /opt/freesurfer/bin/recon-all.v6.hires
 
 COPY run.py /run.py
 RUN chmod +x /run.py
