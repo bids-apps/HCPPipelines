@@ -192,8 +192,6 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface',
                             'DiffusionPreprocessing'])
-parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
-                    required=True)
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 
