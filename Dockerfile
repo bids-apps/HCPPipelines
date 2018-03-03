@@ -78,7 +78,7 @@ RUN apt-get update && \
 WORKDIR /
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
-    wget https://github.com/jokedurnez/Pipelines/archive/v3.25.0-jd.tar.gz -O pipelines.tar.gz && \
+    wget https://github.com/jokedurnez/Pipelines/archive/BIDS-app.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
