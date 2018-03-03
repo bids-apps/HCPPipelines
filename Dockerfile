@@ -109,6 +109,8 @@ ENV PYTHONPATH=""
 WORKDIR /opt/freesurfer/bin
 RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/d26114a201333f812d2cef67a338e2685c004d00/scripts/recon-all.v6.hires && \
     chmod +x /opt/freesurfer/bin/recon-all.v6.hires
+RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/tess1mm && \
+    chmod +x /opt/freesurfer/bin/tess1mm
 
 COPY run.py /run.py
 RUN chmod +x /run.py
