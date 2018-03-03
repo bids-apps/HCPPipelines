@@ -24,7 +24,7 @@ test:
     # print version
     - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset bids/${CIRCLE_PROJECT_REPONAME,,} --version
     # participant level tests for single session dataset
-    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7" --n_cpus 2:
+    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --n_cpus 2:
         timeout: 21600
 deployment:
   hub:
