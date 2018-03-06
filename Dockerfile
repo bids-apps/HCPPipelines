@@ -28,6 +28,7 @@ RUN apt-get -y update \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
     apt-get install -y tcsh bc tar libgomp1 perl-modules curl
+
 # Set up the environment
 ENV OS Linux
 ENV FS_OVERRIDE 0
@@ -105,6 +106,11 @@ ENV CARET7DIR=/usr/bin
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.4.2
 ENV PYTHONPATH=""
+
+# missing libraries
+RUN echo deb http://security.ubuntu.com/ubuntu precise-security main >> /etc/apt/sources.list && \
+    apt update && \
+    apt install -y libxp6 libxmu6
 
 WORKDIR /opt/freesurfer/bin
 RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/d26114a201333f812d2cef67a338e2685c004d00/scripts/recon-all.v6.hires && \
