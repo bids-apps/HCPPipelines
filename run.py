@@ -159,8 +159,7 @@ def run_diffusion_processsing(**args):
       '--echospacing="{echospacing}" '+ \
       '--PEdir={PEdir} ' + \
       '--gdcoeffs="NONE" ' + \
-      '--extra-eddy-arg="--data_is_shelled" ' + \
-      '--no-gpu '
+      '--extra-eddy-arg="--data_is_shelled" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -433,7 +432,6 @@ if args.analysis_level == "participant":
             metadata = layout.get_metadata(dwi.filename)
             # get phaseencodingdirection
             phaseenc = metadata['PhaseEncodingDirection']
-            print("hase: %s - ind: %i"%(phaseenc,idx))
             acq = 1 if phaseenc[0]=='i' else 2
             if not PEdir:
                 PEdir = acq
