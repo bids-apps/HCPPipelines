@@ -245,7 +245,7 @@ if args.analysis_level == "participant":
 
         if fieldmap_set:
             if len(fieldmap_set)>1:
-                fieldmap_trans=dict(zip(d,zip(*[d.values() for d in fieldmap_set])))
+                fieldmap_trans=dict(zip(fieldmap_set[0],zip(*[d.values() for d in fieldmap_set])))
             else:
                 fieldmap_trans = {k:[v] for k,v in fieldmap_set[0].iteritems()}
 
