@@ -261,7 +261,7 @@ if args.analysis_level == "participant":
                               "t2samplespacing": "%.8f"%t2_spacing,
                               "unwarpdir": unwarpdir})
 
-            if set(fieldmap_set["type"]) == set(["phasediff"]):
+            if set(fieldmap_trans["type"]) == set(["phasediff"]):
                 merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
                 run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
                 subject_label,
@@ -278,7 +278,7 @@ if args.analysis_level == "participant":
                                   "fmapphase": fieldmap_trans["phasediff"][0],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif set(fieldmap_set["type"]) == set(["epi"]):
+            elif set(fieldmap_trans["type"]) == set(["epi"]):
                 SEPhaseNeg = None
                 SEPhasePos = None
                 seunwarpdir = None
