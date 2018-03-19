@@ -289,7 +289,7 @@ if args.analysis_level == "participant":
                     else:
                         SEPhasePos = fieldmap
 
-                unwarpdir = enc_dir.replace('-', '').replace('i','x').replace('j','y').replace('k',z)
+                unwarpdir = enc_dir.replace('-', '').replace('i','x').replace('j','y').replace('k','z')
                 if seunwarpdir and not seunwarpdir == unwarpdir:
                     raise RuntimeError("Inconsistent unwarp directions.")
                 else:
