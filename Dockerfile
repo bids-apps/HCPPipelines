@@ -124,6 +124,7 @@ RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/d26114a201333f8
 RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/tess1mm && \
     chmod +x /opt/freesurfer/bin/tess1mm
 RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_openmp > $FSLDIR/bin/eddy_openmp
+RUN chmod +x $FSLDIR/bin/eddy_openmp
 
 COPY run.py /run.py
 RUN chmod +x /run.py
