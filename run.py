@@ -293,8 +293,8 @@ if args.analysis_level == "participant":
                     if seunwarpdir and not seunwarpdir == unwarpdir:
                         raise RuntimeError("Inconsistent unwarp directions.")
                     else:
-                        raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w.  Please fix your dataset.")
-                    seunwarpdir = copy.deepcopy(unwarpdir)
+                        #raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w.  Please fix your dataset.")
+                        seunwarpdir = copy.deepcopy(unwarpdir)
 
                 fmap_arguments = {}
                 for fieldmap in fieldmap_set:
