@@ -198,7 +198,7 @@ args = parser.parse_args()
 
 
 
-#run("bids-validator " + args.bids_dir)
+run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
