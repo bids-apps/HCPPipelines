@@ -1,5 +1,5 @@
 # Use Ubuntu 14.04 LTS
-FROM ubuntu:trusty-20170119
+FROM ubuntu:14.04
 
 ## Install the validator
 RUN apt-get update && \
@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get remove -y curl && \
     apt-get install -y nodejs
 
-RUN npm install -g bids-validator@0.19.2
+RUN npm install -g bids-validator@0.25.07
 
 # Download FreeSurfer
 RUN apt-get -y update \
@@ -27,7 +27,9 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl 
+    apt-get remove -y wget && \
+    apt-get install -y tcsh bc tar libgomp1 perl-modules curl  && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set up the environment
 ENV OS Linux
@@ -53,9 +55,9 @@ RUN apt-get update && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
     apt-get update && \
-    apt-get install -y fsl-core=5.0.9-4~nd14.04+1
+    apt-get install -y fsl-core=5.0.9-4~nd14.04+1 && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Configure environment
 ENV FSLDIR=/usr/share/fsl/5.0
 ENV FSL_DIR="${FSLDIR}"
 ENV FSLOUTPUTTYPE=NIFTI_GZ
@@ -68,20 +70,24 @@ ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
-# Install Connectome Workbench
-RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
-
-ENV CARET7DIR=/usr/bin
+# Get connectome workbench
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
+    apt-get update && \
+    apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 
 # Install HCP Pipelines
+WORKDIR /
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
-    wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
+    wget https://github.com/jokedurnez/Pipelines/archive/v0.1.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
     tar zxvf /pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
     rm /pipelines.tar.gz && \
-    cd / 
+    cd /
 
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
 ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates
@@ -97,11 +103,28 @@ ENV HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts
 ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
-ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+ENV MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig
+ENV CARET7DIR=/usr/bin
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
-RUN pip install pybids==0.0.1
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
+ADD requirements.txt requirements.txt
+RUN pip install -r requirements.txt && \
+    rm -rf ~/.cache/pip
+
 ENV PYTHONPATH=""
+
+# missing libraries
+RUN echo deb http://security.ubuntu.com/ubuntu precise-security main >> /etc/apt/sources.list && \
+    apt update && \
+    apt install -y libxp6 libxmu6
+
+WORKDIR /opt/freesurfer/bin
+RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/d26114a201333f812d2cef67a338e2685c004d00/scripts/recon-all.v6.hires && \
+    chmod +x /opt/freesurfer/bin/recon-all.v6.hires
+RUN wget https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/tess1mm && \
+    chmod +x /opt/freesurfer/bin/tess1mm
+RUN wget -qO- https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/eddy-patch-fsl-5.0.9/centos6/eddy_openmp > $FSLDIR/bin/eddy_openmp
+RUN chmod +x $FSLDIR/bin/eddy_openmp
 
 COPY run.py /run.py
 RUN chmod +x /run.py

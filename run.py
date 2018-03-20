@@ -8,6 +8,7 @@ from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
 import subprocess
+import copy
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
@@ -63,9 +64,9 @@ def run_pre_freesurfer(**args):
     '--t2samplespacing="{t2samplespacing}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs="NONE" ' + \
+    '--extra-eddy-arg="--data_is_shelled"' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
-    '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
-    '--printcom=""'
+    '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -77,8 +78,7 @@ def run_freesurfer(**args):
       '--subjectDIR="{subjectDIR}" ' + \
       '--t1="{path}/{subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
       '--t1brain="{path}/{subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
-      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
-      '--printcom=""'
+      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" '
     cmd = cmd.format(**args)
 
     if not os.path.exists(os.path.join(args["subjectDIR"], "fsaverage")):
@@ -107,8 +107,7 @@ def run_post_freesurfer(**args):
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
-      '--regname="FS" ' + \
-      '--printcom=""'
+      '--regname="FS" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -132,7 +131,6 @@ def run_generic_fMRI_volume_processsing(**args):
       '--dcmethod={dcmethod} ' + \
       '--gdcoeffs="NONE" ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
-      '--printcom="" ' + \
       '--biascorrection={biascorrection} ' + \
       '--mctype="MCFLIRT"'
     cmd = cmd.format(**args)
@@ -161,14 +159,13 @@ def run_diffusion_processsing(**args):
       '--subject="{subject}" ' + \
       '--echospacing="{echospacing}" '+ \
       '--PEdir={PEdir} ' + \
-      '--gdcoeffs="NONE" ' + \
-      '--printcom=""'
+      '--gdcoeffs="NONE" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
+parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI, DWI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
@@ -194,10 +191,8 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface',
                             'DiffusionPreprocessing'])
-parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
-                    required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
 
 args = parser.parse_args()
 
@@ -236,7 +231,7 @@ if args.analysis_level == "participant":
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
-        fieldmap_set = layout.get_fieldmap(t1ws[0])
+        fieldmap_set = layout.get_fieldmap(t1ws[0],return_list=True)
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
                      "echodiff": "NONE",
@@ -250,6 +245,11 @@ if args.analysis_level == "participant":
                      "seunwarpdir": "NONE"}
 
         if fieldmap_set:
+            if len(fieldmap_set)>1:
+                fieldmap_trans=dict(zip(fieldmap_set[0],zip(*[d.values() for d in fieldmap_set])))
+            else:
+                fieldmap_trans = {k:[v] for k,v in fieldmap_set[0].iteritems()}
+
             t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
             t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
@@ -262,58 +262,67 @@ if args.analysis_level == "participant":
                               "t2samplespacing": "%.8f"%t2_spacing,
                               "unwarpdir": unwarpdir})
 
-            if fieldmap_set["type"] == "phasediff":
+            if set(fieldmap_trans["type"]) == set(["phasediff"]):
                 merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
                 run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
                 subject_label,
                 merged_file,
-                fieldmap_set["magnitude1"],
-                fieldmap_set["magnitude2"]))
+                " ".join(fieldmap_trans["magnitude1"]),
+                " ".join(fieldmap_trans["magnitude2"])))
 
-                phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
+                phasediff_metadata = layout.get_metadata(fieldmap_trans["phasediff"][0])
                 te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
                 # HCP expects TE in miliseconds
                 te_diff = te_diff*1000.0
 
                 fmap_args.update({"fmapmag": merged_file,
-                                  "fmapphase": fieldmap_set["phasediff"],
+                                  "fmapphase": fieldmap_trans["phasediff"][0],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif fieldmap_set["type"] == "epi":
+            elif set(fieldmap_trans["type"]) == set(["epi"]):
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
+                seunwarpdir = None
+                for fieldmap in fieldmap_trans["epi"]:
                     enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                     if "-" in enc_dir:
                         SEPhaseNeg = fieldmap
                     else:
                         SEPhasePos = fieldmap
 
-                seunwarpdir = layout.get_metadata(fieldmap_set["epi"][0])["PhaseEncodingDirection"]
-                seunwarpdir = seunwarpdir.replace("-", "").replace("i","x").replace("j", "y").replace("k", "z")
+                    unwarpdir = enc_dir.replace('-', '').replace('i','x').replace('j','y').replace('k','z')
+                    if seunwarpdir and not seunwarpdir == unwarpdir:
+                        raise RuntimeError("Inconsistent unwarp directions.")
+                    else:
+                        #raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w.  Please fix your dataset.")
+                        seunwarpdir = copy.deepcopy(unwarpdir)
 
-                #TODO check consistency of echo spacing instead of assuming it's all the same
-                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"][0]):
-                    echospacing = layout.get_metadata(fieldmap_set["epi"][0])["EffectiveEchoSpacing"]
-                elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"][0]):
-                    # HCP Pipelines do not allow users to specify total readout time directly
-                    # Hence we need to reverse the calculations to provide echo spacing that would
-                    # result in the right total read out total read out time
-                    # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
-                    print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
-                    # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
-                    total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
-                    phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
-                    echospacing = total_readout_time / float(phase_len - 1)
-                else:
-                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+                fmap_arguments = {}
+                for fieldmap in fieldmap_trans['epi']:
+                    if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap):
+                        echospacing = layout.get_metadata(fieldmap)["EffectiveEchoSpacing"]
+                    elif "TotalReadoutTime" in layout.get_metadata(fieldmap):
+                        # HCP Pipelines do not allow users to specify total readout time directly
+                        # Hence we need to reverse the calculations to provide echo spacing that would
+                        # result in the right total read out total read out time
+                        # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
+                        print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
+                        # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
+                        total_readout_time = layout.get_metadata(fieldmap)["TotalReadoutTime"]
+                        phase_len = nibabel.load(fieldmap).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                        echospacing = total_readout_time / float(phase_len - 1)
+                    else:
+                        raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+                    if 'echospacing' in fmap_arguments.keys() and not fmap_arguments['echospacing']==echospacing:
+                        raise RuntimeError("Inconsistent echospacing.")
 
                 fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
                                   "SEPhasePos": SEPhasePos,
                                   "echospacing": "%.6f"%echospacing,
                                   "seunwarpdir": seunwarpdir,
                                   "avgrdcmethod": "TOPUP"})
-        #TODO add support for GE fieldmaps
+        else:
+            raise RuntimeError("Inconsistent fieldmap types or unknown type.")
 
         struct_stages_dict = OrderedDict([("PreFreeSurfer", partial(run_pre_freesurfer,
                                                 path=args.output_dir,
@@ -350,16 +359,18 @@ if args.analysis_level == "participant":
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
 
-            fieldmap_set = layout.get_fieldmap(fmritcs)
-            if fieldmap_set and fieldmap_set["type"] == "epi":
-                SEPhaseNeg = None
-                SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
-                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
-                    if "-" in enc_dir:
-                        SEPhaseNeg = fieldmap
-                    else:
-                        SEPhasePos = fieldmap
+            fieldmap_set = layout.get_fieldmap(fmritcs,return_list=True)
+            if fieldmap_set:
+                fieldmap_trans = dict(zip(fieldmap_set[0],zip(*[d.values() for d in fieldmap_set])))
+                if set(fieldmap_trans['type']) == set(['epi']):
+                    SEPhaseNeg = None
+                    SEPhasePos = None
+                    for fieldmap in fieldmap_trans["epi"]:
+                        enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                        if "-" in enc_dir:
+                            SEPhaseNeg = fieldmap
+                        else:
+                            SEPhasePos = fieldmap
                 echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
                 unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
                 unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
@@ -412,28 +423,42 @@ if args.analysis_level == "participant":
         dwis = layout.get(subject=subject_label, type='dwi',
                                                  extensions=["nii.gz", "nii"])
 
-        # print(dwis)
-        # acqs = set(layout.get(target='acquisition', return_type='id',
-        #                       subject=subject_label, type='dwi',
-        #                       extensions=["nii.gz", "nii"]))
-        # print(acqs)
-        # posData = []
-        # negData = []
-        # for acq in acqs:
-        #     pos = "EMPTY"
-        #     neg = "EMPTY"
-        #     dwis = layout.get(subject=subject_label,
-        #                       type='dwi', acquisition=acq,
-        #                       extensions=["nii.gz", "nii"])
-        #     assert len(dwis) <= 2
-        #     for dwi in dwis:
-        #         dwi = dwi.filename
-        #         if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
-        #             neg = dwi
-        #         else:
-        #             pos = dwi
-        #     posData.append(pos)
-        #     negData.append(neg)
-        #
-        # print(negData)
-        # print(posData)
+        pos = []; neg = []
+        PEdir = None; echospacing = None
+
+        for idx,dwi in enumerate(dwis):
+            metadata = layout.get_metadata(dwi.filename)
+            # get phaseencodingdirection
+            phaseenc = metadata['PhaseEncodingDirection']
+            acq = 1 if phaseenc[0]=='i' else 2
+            if not PEdir:
+                PEdir = acq
+            if PEdir != acq:
+                raise RuntimeError("Not all dwi images have the same encoding direction (both LR and AP). Not implemented.")
+            # get pos/neg
+            if len(phaseenc)>1:
+                neg.append(dwi.filename)
+            else:
+                pos.append(dwi.filename)
+            # get echospacing
+            if not echospacing:
+                echospacing = metadata['EffectiveEchoSpacing']*1000.
+            if echospacing != metadata['EffectiveEchoSpacing']*1000.:
+                raise RuntimeError("Not all dwi images have the same echo spacing. Not implemented.")
+
+        posdata = "@".join(pos)
+        negdata = "@".join(neg)
+
+        dif_stages_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
+                                                 path=args.output_dir,
+                                                 subject="sub-%s"%subject_label,
+                                                 posData=posdata,
+                                                 negData=negdata,
+                                                 echospacing=echospacing,
+                                                 n_cpus=args.n_cpus,
+                                                 PEdir=PEdir))
+                       ])
+
+        for stage, stage_func in dif_stages_dict.iteritems():
+            if stage in args.stages:
+                stage_func()
