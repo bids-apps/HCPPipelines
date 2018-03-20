@@ -8,6 +8,7 @@ from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
 import subprocess
+import copy
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
@@ -197,7 +198,7 @@ args = parser.parse_args()
 
 
 
-run("bids-validator " + args.bids_dir)
+#run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
@@ -297,23 +298,23 @@ if args.analysis_level == "participant":
                         seunwarpdir = copy.deepcopy(unwarpdir)
 
                 fmap_arguments = {}
-                for fieldmap in fieldmap_set:
-                    if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"]):
-                        echospacing = layout.get_metadata(fieldmap_set["epi"])["EffectiveEchoSpacing"]
-                    elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"]):
+                for fieldmap in fieldmap_trans['epi']:
+                    if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap):
+                        echospacing = layout.get_metadata(fieldmap)["EffectiveEchoSpacing"]
+                    elif "TotalReadoutTime" in layout.get_metadata(fieldmap):
                         # HCP Pipelines do not allow users to specify total readout time directly
                         # Hence we need to reverse the calculations to provide echo spacing that would
                         # result in the right total read out total read out time
                         # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
                         print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
                         # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
-                        total_readout_time = layout.get_metadata(fieldmap_set["epi"])["TotalReadoutTime"]
-                        phase_len = nibabel.load(fieldmap_set["epi"]).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                        total_readout_time = layout.get_metadata(fieldmap)["TotalReadoutTime"]
+                        phase_len = nibabel.load(fieldmap).shape[{"x": 0, "y": 1}[seunwarpdir]]
                         echospacing = total_readout_time / float(phase_len - 1)
-                else:
-                    raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
-                if 'echospacing' in fmap_arguments.keys() and not fmap_arguments['echospacing']==echospacing:
-                    raise RuntimeError("Inconsistent echospacing.")
+                    else:
+                        raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+                    if 'echospacing' in fmap_arguments.keys() and not fmap_arguments['echospacing']==echospacing:
+                        raise RuntimeError("Inconsistent echospacing.")
 
                 fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
                                   "SEPhasePos": SEPhasePos,
@@ -364,7 +365,7 @@ if args.analysis_level == "participant":
                 if set(fieldmap_trans['type']) == set(['epi']):
                     SEPhaseNeg = None
                     SEPhasePos = None
-                    for fieldmap in fieldmap_set["epi"]:
+                    for fieldmap in fieldmap_trans["epi"]:
                         enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                         if "-" in enc_dir:
                             SEPhaseNeg = fieldmap
