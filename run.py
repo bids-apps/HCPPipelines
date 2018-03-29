@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -v
 from __future__ import print_function
 import argparse
 import os
@@ -225,6 +225,7 @@ if args.analysis_level == "participant":
         t2ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T2w',
                                                extensions=["nii.gz", "nii"])]
+        fieldmaps = [f for f in layout.get(subject=subject_label, type=['epi', 'phasediff'], extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
         assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
 
@@ -236,7 +237,9 @@ if args.analysis_level == "participant":
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
-        fieldmap_set = layout.get_fieldmap(t1ws[0])
+        fieldmap_set = fieldmaps
+        fieldmap_num = len(fieldmaps)
+
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
                      "echodiff": "NONE",
@@ -279,31 +282,33 @@ if args.analysis_level == "participant":
                                   "fmapphase": fieldmap_set["phasediff"],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif fieldmap_set["type"] == "epi":
+            elif fieldmap_set[0][1] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
+                for i in len(fieldmap_set):
+                    fieldmap = fieldmap_set[i][0]
                     enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                     if "-" in enc_dir:
                         SEPhaseNeg = fieldmap
                     else:
                         SEPhasePos = fieldmap
 
-                seunwarpdir = layout.get_metadata(fieldmap_set["epi"][0])["PhaseEncodingDirection"]
+
+                seunwarpdir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                 seunwarpdir = seunwarpdir.replace("-", "").replace("i","x").replace("j", "y").replace("k", "z")
 
                 #TODO check consistency of echo spacing instead of assuming it's all the same
-                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"][0]):
-                    echospacing = layout.get_metadata(fieldmap_set["epi"][0])["EffectiveEchoSpacing"]
-                elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"][0]):
+                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap):
+                    echospacing = layout.get_metadata(fieldmap)["EffectiveEchoSpacing"]
+                elif "TotalReadoutTime" in layout.get_metadata(fieldmap):
                     # HCP Pipelines do not allow users to specify total readout time directly
                     # Hence we need to reverse the calculations to provide echo spacing that would
                     # result in the right total read out total read out time
                     # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
                     print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
                     # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
-                    total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
-                    phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                    total_readout_time = layout.get_metadata(fieldmap)["TotalReadoutTime"]
+                    phase_len = nibabel.load(fieldmap).shape[{"x": 0, "y": 1}[seunwarpdir]]
                     echospacing = total_readout_time / float(phase_len - 1)
                 else:
                     raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
