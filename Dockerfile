@@ -99,7 +99,7 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools nano
 RUN pip install pybids==0.0.1
 ENV PYTHONPATH=""
 
