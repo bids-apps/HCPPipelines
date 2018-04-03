@@ -167,8 +167,8 @@ def run_diffusion_processsing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
-#__version__ = open('/version').read()
-__version__ = open('/home/timothy/projects/BIDS_apps/HCPPipelines/version').read()
+__version__ = open('/version').read()
+#__version__ = open('/home/timothy/projects/BIDS_apps/HCPPipelines/version').read()
 
 parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
@@ -207,7 +207,7 @@ args = parser.parse_args()
 
 run("bids-validator " + args.bids_dir)
 
-#layout = BIDSLayout(args.bids_dir)
+layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
