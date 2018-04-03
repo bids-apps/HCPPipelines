@@ -8,8 +8,6 @@ This script is designed to determine which field maps apply to discrete fMRI sca
 Author - Timothy J Hendrickson
 """
 
-#subject_path = #"/home/timothy/sandbox_DO_NOT_DELETE/BIDS/263_ETOH_BIDS/output/sub-8404"
-
 def setup(subject_path):
 	if "ses" in os.listdir(subject_path)[0]:
 		for item in (os.listdir(subject_path)):
@@ -32,7 +30,12 @@ def IntendedFor(data_path):
 					g.close()
 				if shim_fmap == shim_func:
 					func_nii = glob(data_path+'/func/' +func.split('/')[-1].split('.')[0]+".nii*")[0]
-					func_list.append(func_nii)
+					if "ses" in data_path:
+						func_nii = "/".join(func_nii.split("/")[-3:])
+						func_list.append(func_nii)
+					else:
+						func_nii = "/".join(func_nii.split("/")[-2:])
+						func_list.append(func_nii)
 			entry = {"IntendedFor": func_list}
 
 			fmap_json.update(entry)
@@ -41,7 +44,3 @@ def IntendedFor(data_path):
 				f.close()
 		else:
 			print(fmap + " already exists for this session")
-setup(subject_path)
-
-
-

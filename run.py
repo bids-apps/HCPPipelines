@@ -11,6 +11,7 @@ import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
+from IntendedFor import setup, IntendedFor
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -166,7 +167,8 @@ def run_diffusion_processsing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
-__version__ = open('/version').read()
+#__version__ = open('/version').read()
+__version__ = open('/home/timothy/projects/BIDS_apps/HCPPipelines/version').read()
 
 parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
@@ -197,7 +199,7 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
 
 args = parser.parse_args()
 
@@ -205,7 +207,7 @@ args = parser.parse_args()
 
 run("bids-validator " + args.bids_dir)
 
-layout = BIDSLayout(args.bids_dir)
+#layout = BIDSLayout(args.bids_dir)
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
@@ -217,8 +219,10 @@ else:
 
 # running participant level
 if args.analysis_level == "participant":
-    # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
+        # before doing anything else make sure that the fieldmap json files are set up correctly
+        setup(os.path.join(args.bids_dir, "sub-"+subject_label))
+
         t1ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T1w',
                                                extensions=["nii.gz", "nii"])]

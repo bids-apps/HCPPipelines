@@ -107,4 +107,5 @@ COPY run.py /run.py
 RUN chmod +x /run.py
 
 COPY version /version
+COPY IntendedFor.py /IntendedFor.py
 ENTRYPOINT ["/run.py"]
