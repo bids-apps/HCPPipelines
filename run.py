@@ -7,6 +7,7 @@ import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
+import pdb
 import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
@@ -229,7 +230,6 @@ if args.analysis_level == "participant":
         t2ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T2w',
                                                extensions=["nii.gz", "nii"])]
-        fieldmaps = [f for f in layout.get(subject=subject_label, type=['epi', 'phasediff'], extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
         assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
 
@@ -241,9 +241,7 @@ if args.analysis_level == "participant":
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
-        fieldmap_set = fieldmaps
-        fieldmap_num = len(fieldmaps)
-
+        fieldmap_set = layout.get_fieldmap(t1ws[0])
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
                      "echodiff": "NONE",
@@ -286,11 +284,10 @@ if args.analysis_level == "participant":
                                   "fmapphase": fieldmap_set["phasediff"],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif fieldmap_set[0][1] == "epi":
+            elif fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for i in len(fieldmap_set):
-                    fieldmap = fieldmap_set[i][0]
+                for fieldmap in fieldmap_set["epi"]:
                     enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                     if "-" in enc_dir:
                         SEPhaseNeg = fieldmap
@@ -354,7 +351,7 @@ if args.analysis_level == "participant":
         for fmritcs in bolds:
             fmriname = "_".join(fmritcs.split("sub-")[-1].split("_")[1:]).split(".")[0]
             assert fmriname
-
+            pdb.set_trace()
             fmriscout = fmritcs.replace("_bold", "_sbref")
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
@@ -417,32 +414,31 @@ if args.analysis_level == "participant":
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
                     stage_func()
-
-        dwis = layout.get(subject=subject_label, type='dwi',
+            pdb.set_trace()
+            dwis = layout.get(subject=subject_label, type='dwi',
                                                  extensions=["nii.gz", "nii"])
+            print(dwis)
+            acqs = set(layout.get(target='acquisition', return_type='id',
+                               subject=subject_label, type='dwi',
+                               extensions=["nii.gz", "nii"]))
+            print(acqs)
+            posData = []
+            negData = []
+            for acq in acqs:
+             pos = "EMPTY"
+             neg = "EMPTY"
+             dwis = layout.get(subject=subject_label,
+                               type='dwi', acquisition=acq,
+                               extensions=["nii.gz", "nii"])
+             assert len(dwis) <= 2
+             for dwi in dwis:
+                 dwi = dwi.filename
+                 if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
+                     neg = dwi
+                 else:
+                     pos = dwi
+             posData.append(pos)
+             negData.append(neg)
 
-        # print(dwis)
-        # acqs = set(layout.get(target='acquisition', return_type='id',
-        #                       subject=subject_label, type='dwi',
-        #                       extensions=["nii.gz", "nii"]))
-        # print(acqs)
-        # posData = []
-        # negData = []
-        # for acq in acqs:
-        #     pos = "EMPTY"
-        #     neg = "EMPTY"
-        #     dwis = layout.get(subject=subject_label,
-        #                       type='dwi', acquisition=acq,
-        #                       extensions=["nii.gz", "nii"])
-        #     assert len(dwis) <= 2
-        #     for dwi in dwis:
-        #         dwi = dwi.filename
-        #         if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
-        #             neg = dwi
-        #         else:
-        #             pos = dwi
-        #     posData.append(pos)
-        #     negData.append(neg)
-        #
-        # print(negData)
-        # print(posData)
+            print(negData)
+            print(posData)
