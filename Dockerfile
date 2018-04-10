@@ -1,3 +1,4 @@
+
 # Use Ubuntu 14.04 LTS
 FROM ubuntu:trusty-20170119
 
@@ -51,8 +52,8 @@ ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-    apt-get update && \
+    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9
+RUN    apt-get update && \
     apt-get install -y fsl-core=5.0.9-4~nd14.04+1
 
 # Configure environment
@@ -100,11 +101,14 @@ ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
-RUN pip install pybids==0.0.1
+RUN pip install pybids==0.5.1
+RUN pip install --upgrade pybids
 ENV PYTHONPATH=""
 
 COPY run.py /run.py
-RUN chmod +x /run.py
+RUN chmod 111 /run.py
 
 COPY version /version
+COPY IntendedFor.py /IntendedFor.py
+RUN chmod 111 /IntendedFor.py
 ENTRYPOINT ["/run.py"]

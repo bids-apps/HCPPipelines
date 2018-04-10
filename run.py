@@ -11,6 +11,7 @@ import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
+from IntendedFor import setup,IntendedFor
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -219,6 +220,9 @@ else:
 if args.analysis_level == "participant":
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
+
+        # before do anything else add IntendedFor field to fieldmap
+        setup(os.path.join(args.bids_dir, "sub-"+subject_label))
         t1ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T1w',
                                                extensions=["nii.gz", "nii"])]
@@ -350,7 +354,7 @@ if args.analysis_level == "participant":
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
 
-            fieldmap_set = layout.get_fieldmap(fmritcs)
+            fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
             if fieldmap_set and fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
