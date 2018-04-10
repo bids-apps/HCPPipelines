@@ -7,14 +7,12 @@ import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
+import pdb
 import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
-<<<<<<< HEAD
 from IntendedFor import setup,IntendedFor
-=======
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -223,12 +221,8 @@ else:
 if args.analysis_level == "participant":
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
-<<<<<<< HEAD
-
         # before do anything else add IntendedFor field to fieldmap
         setup(os.path.join(args.bids_dir, "sub-"+subject_label))
-=======
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
         t1ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T1w',
                                                extensions=["nii.gz", "nii"])]
@@ -360,34 +354,32 @@ if args.analysis_level == "participant":
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
 
-<<<<<<< HEAD
             fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
-=======
-            fieldmap_set = layout.get_fieldmap(fmritcs)
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
-            if fieldmap_set and fieldmap_set["type"] == "epi":
-                SEPhaseNeg = None
-                SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
-                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
-                    if "-" in enc_dir:
-                        SEPhaseNeg = fieldmap
+            if fieldmap_set:
+                for item in fieldmap_set:
+
+                    if item["type"] == "epi":
+
+                        fieldmap = item["epi"]
+                        enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                        if "-" in enc_dir:
+                            SEPhaseNeg = fieldmap
+                        else:
+                            SEPhasePos = fieldmap
+                        echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
+                        unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
+                        unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
+                        if len(unwarpdir) == 2:
+                            unwarpdir = "-" + unwarpdir[0]
+                        dcmethod = "TOPUP"
+                        biascorrection = "SEBASED"
                     else:
-                        SEPhasePos = fieldmap
-                echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
-                unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
-                unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
-                if len(unwarpdir) == 2:
-                    unwarpdir = "-" + unwarpdir[0]
-                dcmethod = "TOPUP"
-                biascorrection = "SEBASED"
-            else:
-                SEPhaseNeg = "NONE"
-                SEPhasePos = "NONE"
-                echospacing = "NONE"
-                unwarpdir = "NONE"
-                dcmethod = "NONE"
-                biascorrection = "NONE"
+                        SEPhaseNeg = "NONE"
+                        SEPhasePos = "NONE"
+                        echospacing = "NONE"
+                        unwarpdir = "NONE"
+                        dcmethod = "NONE"
+                        biascorrection = "NONE"
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
             fmrires = float(min(zooms[:3]))

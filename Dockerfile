@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
 # Use Ubuntu 14.04 LTS
 FROM ubuntu:trusty-20170119
 
@@ -31,7 +27,7 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl 
+    apt-get install -y tcsh bc tar libgomp1 perl-modules curl
 
 # Set up the environment
 ENV OS Linux
@@ -55,13 +51,8 @@ ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-<<<<<<< HEAD
     apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9
-RUN    apt-get update && \
-=======
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9 && \
-    apt-get update && \
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
+RUN apt-get update && \
     apt-get install -y fsl-core=5.0.9-4~nd14.04+1
 
 # Configure environment
@@ -108,25 +99,16 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
-<<<<<<< HEAD
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.5.1
 RUN pip install --upgrade pybids
 ENV PYTHONPATH=""
 
 COPY run.py /run.py
-RUN chmod 111 /run.py
+RUN chmod 555 /run.py
 
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
-RUN chmod 111 /IntendedFor.py
-=======
-RUN pip install pybids==0.0.1
-ENV PYTHONPATH=""
+RUN chmod 555 /IntendedFor.py
 
-COPY run.py /run.py
-RUN chmod +x /run.py
-
-COPY version /version
->>>>>>> ce2c6dbfe600164acbcb75a9fb83d54e440c15af
 ENTRYPOINT ["/run.py"]
