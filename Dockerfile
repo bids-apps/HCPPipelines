@@ -107,4 +107,4 @@ COPY run.py /run.py
 RUN chmod +x /run.py
 
 COPY version /version
-ENTRYPOINT ["/run.py"]
+ENTRYPOINT ["/bin/bash -c /run.py"]
