@@ -169,6 +169,17 @@ def run_diffusion_processsing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
+def run_ICAFIX_processing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/Examples/Scripts/IcaFixProcessingBatch.sh' + \
+        '--StudyFolder="{path} ' + \
+        '--Subject="{subject}" ' + \
+        '--EnvironmentScript="{EnvironmentScript}"' + \
+        '--FixDir="{FixDir}" ' + \
+        '--RunLocal="{RunLocal}"'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
 __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
