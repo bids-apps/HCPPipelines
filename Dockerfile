@@ -109,5 +109,5 @@ RUN chmod +x /run.py
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
 
-ENTRYPOINT ["/bin/bash -c /run.py"]
+#ENTRYPOINT ["/bin/bash -c /run.py"]
 
