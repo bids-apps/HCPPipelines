@@ -11,6 +11,7 @@ import subprocess
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
+from IntendedFor import setup, IntendedFor
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -197,7 +198,8 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
+
 
 args = parser.parse_args()
 
@@ -217,8 +219,10 @@ else:
 
 # running participant level
 if args.analysis_level == "participant":
-    # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
+        # before doing anything else make sure that the fieldmap json files are set up correctly
+        setup(os.path.join(args.bids_dir, "sub-"+subject_label))
+
         t1ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T1w',
                                                extensions=["nii.gz", "nii"])]
@@ -345,7 +349,6 @@ if args.analysis_level == "participant":
         for fmritcs in bolds:
             fmriname = "_".join(fmritcs.split("sub-")[-1].split("_")[1:]).split(".")[0]
             assert fmriname
-
             fmriscout = fmritcs.replace("_bold", "_sbref")
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
