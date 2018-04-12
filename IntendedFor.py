@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 import json
 import os
@@ -9,7 +10,7 @@ This script is designed to determine which field maps apply to discrete fMRI sca
 
 Author - Timothy J Hendrickson
 """
-subject_path = "/home/naxos2-raid8/mangia-data/DATA_R01_rsfMRI/analyzed/BIDS_output/sub-patient03"
+
 def setup(subject_path):
 	if "ses" in os.listdir(subject_path)[0]:
 		for item in (os.listdir(subject_path)):
@@ -64,4 +65,3 @@ def IntendedFor(data_path):
 			json.dump(fmap_json, f)
 			f.close()
 
-setup(subject_path)

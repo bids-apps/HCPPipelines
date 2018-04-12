@@ -14,6 +14,7 @@ from functools import partial
 from collections import OrderedDict
 from IntendedFor import setup,IntendedFor
 
+
 def run(command, env={}, cwd=None):
     merged_env = os.environ
     merged_env.update(env)
@@ -199,7 +200,8 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
+
 
 args = parser.parse_args()
 
@@ -219,7 +221,6 @@ else:
 
 # running participant level
 if args.analysis_level == "participant":
-    # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
         # before do anything else add IntendedFor field to fieldmap
         setup(os.path.join(args.bids_dir, "sub-"+subject_label))
@@ -349,7 +350,6 @@ if args.analysis_level == "participant":
         for fmritcs in bolds:
             fmriname = "_".join(fmritcs.split("sub-")[-1].split("_")[1:]).split(".")[0]
             assert fmriname
-
             fmriscout = fmritcs.replace("_bold", "_sbref")
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
@@ -383,9 +383,7 @@ if args.analysis_level == "participant":
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
             fmrires = float(min(zooms[:3]))
-            fmrires = "2" # https://github.com/Washington-University/Pipelines/blob/637b35f73697b77dcb1d529902fc55f431f03af7/fMRISurface/scripts/SubcorticalProcessing.sh#L43
-            # While running '/usr/bin/wb_command -cifti-create-dense-timeseries /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION_temp_subject.dtseries.nii -volume /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION.nii.gz /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/ROIs/ROIs.2.nii.gz':
-            # ERROR: label volume has a different volume space than data volume
+            fmrires = "2"
 
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,

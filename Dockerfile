@@ -109,6 +109,6 @@ RUN chmod 555 /run.py
 
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
+
 RUN chmod 555 /IntendedFor.py
 
-ENTRYPOINT ["/run.py"]
