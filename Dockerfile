@@ -100,7 +100,7 @@ ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 # Install FIX, along with dependencies
-RUN apt-get update && apt-get install -y build-essential fort77 xorg-dev libbz2-dev liblzma-dev libblas-dev gfortran gcc-multilib gobjc++ libreadline-dev bzip2 libcurl4-gnutls-dev default-jdk
+RUN apt-get update && apt-get install -y build-essential libpcre3 libpcre3-dev  fort77 xorg-dev libbz2-dev liblzma-dev libblas-dev gfortran gcc-multilib gobjc++ libreadline-dev bzip2 libcurl4-gnutls-dev default-jdk
 RUN cd /opt && \
     wget http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz && \
     tar zxvf fix.tar.gz && \
