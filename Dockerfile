@@ -100,15 +100,16 @@ ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 # Install FIX, along with dependencies
-RUN apt-get update && \
-    cd /opt/ && \
+RUN apt-get update && apt-get install -y build-essential fort77 xorg-dev libbz2-dev liblzma-dev libblas-dev gfortran gcc-multilib gobjc++ libreadline-dev bzip2 libcurl4-gnutls-dev default-jdk
+RUN cd /opt && \
     wget http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz && \
     tar zxvf fix.tar.gz && \
     rm fix.tar.gz && \
     wget https://cran.r-project.org/src/base/R-3/R-3.4.4.tar.gz && \
     tar zxvf R-3.4.4.tar.gz && \
-    cd R-3.4.4 && \
-    ./configure && make && make check && make install
+    cd R-3.4.4 && ./configure && make && make check && make install && \
+    cd /opt && \
+    R --vanilla -e "install.packages('kernlab', repos='http://cran.us.r-project.org')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('party', repos='http://cran.us.r-project.org')" -e "install.packages('e1071', repos='http://cran.us.r-project.org')" -e "install.packages('randomForest', repos='http://cran.us.r-project.org')"
 
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
