@@ -74,7 +74,7 @@ RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 ENV CARET7DIR=/usr/bin
 
 # Install HCP Pipelines
-RUN apt-get -y update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends python-numpy && \
     wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
@@ -98,6 +98,18 @@ ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+
+# Install FIX, along with dependencies
+RUN apt-get update && \
+    cd /opt/ && \
+    wget http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz && \
+    tar zxvf fix.tar.gz && \
+    rm fix.tar.gz && \
+    wget https://cran.r-project.org/src/base/R-3/R-3.4.4.tar.gz && \
+    tar zxvf R-3.4.4.tar.gz && \
+    cd R-3.4.4 && \
+    ./configure && make && make check && make install
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.5.1
