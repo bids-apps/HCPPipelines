@@ -403,6 +403,8 @@ if args.analysis_level == "participant":
             if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
                 highpass="2000"
                 training_data="HCP_hp2000.RData"
+                # TODO figure out how to know where the fmriVolume and fmriSurface is being outputted
+                #input_file=
 
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
