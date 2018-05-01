@@ -224,14 +224,215 @@ if args.analysis_level == "participant":
     for subject_label in subjects_to_analyze:
         # before do anything else add IntendedFor field to fieldmap
         setup(os.path.join(args.bids_dir, "sub-"+subject_label))
-        t1ws = [f.filename for f in layout.get(subject=subject_label,
+
+        # if subject label has sessions underneath those need to be outputted into different directories
+        if glob(os.path.join(args.bids_dir, "sub-" + subject_label, "ses-*")):
+            ses_dirs = glob(os.path.join(args.bids_dir, "sub-" + subject_label, "ses-*"))
+            ses_to_analyze = [ses_dir.split("-")[-1] for ses_dir in ses_dirs]
+            for ses_label in ses_to_analyze:
+                t1ws = [f.filename for f in layout.get(subject=subject_label, session=ses_label,
+                                                       type='T1w',
+                                                       extensions=["nii.gz", "nii"])]
+                t2ws = [f.filename for f in layout.get(subject=subject_label, session=ses_label,
+                                                       type='T2w',
+                                                       extensions=["nii.gz", "nii"])]
+                assert (len(t1ws) > 0), "No T1w files found for subject %s and session %s!" % (subject_label, ses_label)
+                assert (len(t2ws) > 0), "No T2w files found for subject %s and session %s!" % (subject_label, ses_label)
+
+            available_resolutions = ["0.7", "0.8", "1"]
+            t1_zooms = nibabel.load(t1ws[0]).get_header().get_zooms()
+            t1_res = float(min(t1_zooms[:3]))
+            t1_template_res = min(available_resolutions, key=lambda x: abs(float(x) - t1_res))
+            t2_zooms = nibabel.load(t2ws[0]).get_header().get_zooms()
+            t2_res = float(min(t2_zooms[:3]))
+            t2_template_res = min(available_resolutions, key=lambda x: abs(float(x) - t2_res))
+
+            fieldmap_set = layout.get_fieldmap(t1ws[0])
+            fmap_args = {"fmapmag": "NONE",
+                         "fmapphase": "NONE",
+                         "echodiff": "NONE",
+                         "t1samplespacing": "NONE",
+                         "t2samplespacing": "NONE",
+                         "unwarpdir": "NONE",
+                         "avgrdcmethod": "NONE",
+                         "SEPhaseNeg": "NONE",
+                         "SEPhasePos": "NONE",
+                         "echospacing": "NONE",
+                         "seunwarpdir": "NONE"}
+
+            if fieldmap_set:
+                t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
+                t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
+
+                unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
+                unwarpdir = unwarpdir.replace("i", "x").replace("j", "y").replace("k", "z")
+                if len(unwarpdir) == 2:
+                    unwarpdir = unwarpdir[0] + "-"
+
+                fmap_args.update({"t1samplespacing": "%.8f" % t1_spacing,
+                                  "t2samplespacing": "%.8f" % t2_spacing,
+                                  "unwarpdir": unwarpdir})
+
+                if fieldmap_set["type"] == "phasediff":
+                    merged_file = "%s/tmp/%s/%s/magfile.nii.gz" % (args.output_dir, subject_label, ses_label)
+                    run("mkdir -p %s/tmp/%s/%s && fslmerge -t %s %s %s" % (args.output_dir,
+                                                                         subject_label,
+                                                                         ses_label,
+                                                                         merged_file,
+                                                                         fieldmap_set["magnitude1"],
+                                                                         fieldmap_set["magnitude2"]))
+
+                    phasediff_metadata = layout.get_metadata(fieldmap_set["phasediff"])
+                    te_diff = phasediff_metadata["EchoTime2"] - phasediff_metadata["EchoTime1"]
+                    # HCP expects TE in miliseconds
+                    te_diff = te_diff * 1000.0
+
+                    fmap_args.update({"fmapmag": merged_file,
+                                      "fmapphase": fieldmap_set["phasediff"],
+                                      "echodiff": "%.6f" % te_diff,
+                                      "avgrdcmethod": "SiemensFieldMap"})
+                elif fieldmap_set["type"] == "epi":
+                    SEPhaseNeg = None
+                    SEPhasePos = None
+                    for fieldmap in fieldmap_set["epi"]:
+                        enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                        if "-" in enc_dir:
+                            SEPhaseNeg = fieldmap
+                        else:
+                            SEPhasePos = fieldmap
+
+                    seunwarpdir = layout.get_metadata(fieldmap_set["epi"][0])["PhaseEncodingDirection"]
+                    seunwarpdir = seunwarpdir.replace("-", "").replace("i", "x").replace("j", "y").replace("k", "z")
+
+                    # TODO check consistency of echo spacing instead of assuming it's all the same
+                    if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"][0]):
+                        echospacing = layout.get_metadata(fieldmap_set["epi"][0])["EffectiveEchoSpacing"]
+                    elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"][0]):
+                        # HCP Pipelines do not allow users to specify total readout time directly
+                        # Hence we need to reverse the calculations to provide echo spacing that would
+                        # result in the right total read out total read out time
+                        # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
+                        print(
+                            "BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
+                        # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
+                        total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
+                        phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                        echospacing = total_readout_time / float(phase_len - 1)
+                    else:
+                        raise RuntimeError(
+                            "EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
+
+                    fmap_args.update({"SEPhaseNeg": SEPhaseNeg,
+                                      "SEPhasePos": SEPhasePos,
+                                      "echospacing": "%.6f" % echospacing,
+                                      "seunwarpdir": seunwarpdir,
+                                      "avgrdcmethod": "TOPUP"})
+            # TODO add support for GE fieldmaps
+
+            struct_stages_dict = OrderedDict([("PreFreeSurfer", partial(run_pre_freesurfer,
+                                                                        path=args.output_dir,
+                                                                        subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                        t1ws=t1ws,
+                                                                        t2ws=t2ws,
+                                                                        n_cpus=args.n_cpus,
+                                                                        t1_template_res=t1_template_res,
+                                                                        t2_template_res=t2_template_res,
+                                                                        **fmap_args)),
+                                              ("FreeSurfer", partial(run_freesurfer,
+                                                                     path=args.output_dir,
+                                                                     subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                     n_cpus=args.n_cpus)),
+                                              ("PostFreeSurfer", partial(run_post_freesurfer,
+                                                                         path=args.output_dir,
+                                                                         subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                         grayordinatesres=grayordinatesres,
+                                                                         lowresmesh=lowresmesh,
+                                                                         n_cpus=args.n_cpus))
+                                              ])
+            for stage, stage_func in struct_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
+
+            bolds = [f.filename for f in layout.get(subject=subject_label, session=ses_label,
+                                                    type='bold',
+                                                    extensions=["nii.gz", "nii"])]
+            for fmritcs in bolds:
+                fmriname = fmritcs.split("%s/func/" % ses_label)[-1].split(".")[0]
+                assert fmriname
+                fmriscout = fmritcs.replace("_bold", "_sbref")
+                if not os.path.exists(fmriscout):
+                    fmriscout = "NONE"
+
+                fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
+                if fieldmap_set:
+                    for item in fieldmap_set:
+
+                        if item["type"] == "epi":
+
+                            fieldmap = item["epi"]
+                            enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                            if "-" in enc_dir:
+                                SEPhaseNeg = fieldmap
+                            else:
+                                SEPhasePos = fieldmap
+                            echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
+                            unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
+                            unwarpdir = unwarpdir.replace("i", "x").replace("j", "y").replace("k", "z")
+                            if len(unwarpdir) == 2:
+                                unwarpdir = "-" + unwarpdir[0]
+                            dcmethod = "TOPUP"
+                            biascorrection = "SEBASED"
+                        else:
+                            SEPhaseNeg = "NONE"
+                            SEPhasePos = "NONE"
+                            echospacing = "NONE"
+                            unwarpdir = "NONE"
+                            dcmethod = "NONE"
+                            biascorrection = "NONE"
+
+                zooms = nibabel.load(fmritcs).get_header().get_zooms()
+                fmrires = float(min(zooms[:3]))
+                fmrires = "2"
+
+                func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
+                                                                       path=args.output_dir,
+                                                                       subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                       fmriname=fmriname,
+                                                                       fmritcs=fmritcs,
+                                                                       fmriscout=fmriscout,
+                                                                       SEPhaseNeg=SEPhaseNeg,
+                                                                       SEPhasePos=SEPhasePos,
+                                                                       echospacing=echospacing,
+                                                                       unwarpdir=unwarpdir,
+                                                                       fmrires=fmrires,
+                                                                       dcmethod=dcmethod,
+                                                                       biascorrection=biascorrection,
+                                                                       n_cpus=args.n_cpus)),
+                                                ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
+                                                                        path=args.output_dir,
+                                                                        subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                        fmriname=fmriname,
+                                                                        fmrires=fmrires,
+                                                                        n_cpus=args.n_cpus,
+                                                                        grayordinatesres=grayordinatesres,
+                                                                        lowresmesh=lowresmesh))
+                                                ])
+                for stage, stage_func in func_stages_dict.iteritems():
+                    if stage in args.stages:
+                        stage_func()
+
+            dwis = layout.get(subject=subject_label, type='dwi',
+                              extensions=["nii.gz", "nii"])
+        else:
+
+            t1ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T1w',
                                                extensions=["nii.gz", "nii"])]
-        t2ws = [f.filename for f in layout.get(subject=subject_label,
+            t2ws = [f.filename for f in layout.get(subject=subject_label,
                                                type='T2w',
                                                extensions=["nii.gz", "nii"])]
-        assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
-        assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
+            assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
+            assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
 
         available_resolutions = ["0.7", "0.8", "1"]
         t1_zooms = nibabel.load(t1ws[0]).get_header().get_zooms()

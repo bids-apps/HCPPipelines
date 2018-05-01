@@ -109,6 +109,15 @@ RUN chmod 555 /run.py
 
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
+COPY mri_convert /mri_convert
+COPY mri_convert.bin /mri_convert.bin
+COPY sources.sh /sources.sh
+
+RUN cp /sources.sh /opt/freesurfer/sources.sh && \
+    cp /mri_convert /opt/freesurfer/bin/mri_convert && \
+    cp /mri_convert.bin /opt/freesurfer/bin/mri_convert.bin
 
 RUN chmod 555 /IntendedFor.py
+
+ENTRYPOINT ["./run.py"]
 
