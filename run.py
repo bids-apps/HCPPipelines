@@ -616,29 +616,3 @@ if args.analysis_level == "participant":
 
         dwis = layout.get(subject=subject_label, type='dwi',
                                                  extensions=["nii.gz", "nii"])
-
-        # print(dwis)
-        # acqs = set(layout.get(target='acquisition', return_type='id',
-        #                       subject=subject_label, type='dwi',
-        #                       extensions=["nii.gz", "nii"]))
-        # print(acqs)
-        # posData = []
-        # negData = []
-        # for acq in acqs:
-        #     pos = "EMPTY"
-        #     neg = "EMPTY"
-        #     dwis = layout.get(subject=subject_label,
-        #                       type='dwi', acquisition=acq,
-        #                       extensions=["nii.gz", "nii"])
-        #     assert len(dwis) <= 2
-        #     for dwi in dwis:
-        #         dwi = dwi.filename
-        #         if "-" in layout.get_metadata(dwi)["PhaseEncodingDirection"]:
-        #             neg = dwi
-        #         else:
-        #             pos = dwi
-        #     posData.append(pos)
-        #     negData.append(neg)
-        #
-        # print(negData)
-        # print(posData)
