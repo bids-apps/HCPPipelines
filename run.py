@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from shutil import rmtree
 import pdb
 import subprocess
+import nibabel as nip
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
@@ -169,6 +170,17 @@ def run_diffusion_processsing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
+def run_ICAFIX_processing(**args):
+    args.update(os.environ)
+    cmd = '{FSL_FIXDIR}/hcp_fix ' + \
+        'fmri ' + \
+        'high pass ' + \
+        '--EnvironmentScript="{EnvironmentScript}"' + \
+        '--FixDir="{FixDir}" ' + \
+        '--RunLocal="{RunLocal}"'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
 __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
@@ -193,9 +205,9 @@ parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
-                                       'fMRISurface', 'DiffusionPreprocessing'],
+                                       'fMRISurface', 'ICAFIX', 'DiffusionPreprocessing'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
-                            'fMRIVolume', 'fMRISurface',
+                            'fMRIVolume', 'fMRISurface', 'ICAFIX'
                             'DiffusionPreprocessing'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
@@ -583,8 +595,17 @@ if args.analysis_level == "participant":
                         biascorrection = "NONE"
 
             zooms = nibabel.load(fmritcs).get_header().get_zooms()
+            reptime = "%.1f" % zooms[3]
             fmrires = float(min(zooms[:3]))
             fmrires = "2"
+
+            #determine which fix training data to use based on resolution and TR
+
+            if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
+                highpass="2000"
+                training_data="HCP_hp2000.RData"
+                # TODO figure out how to know where the fmriVolume and fmriSurface is being outputted
+                #input_file=
 
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
@@ -608,11 +629,55 @@ if args.analysis_level == "participant":
                                                        fmrires=fmrires,
                                                        n_cpus=args.n_cpus,
                                                        grayordinatesres=grayordinatesres,
-                                                       lowresmesh=lowresmesh))
-                                ])
+                                                       lowresmesh=lowresmesh)),
+                                ("ICAFIX", partial(run_ICAFIX_processing,
+                                                   input_file=input_file,
+                                                   highpass=highpass,
+                                                   training_data=training_data))])
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
                     stage_func()
+        pdb.set_trace()
 
         dwis = layout.get(subject=subject_label, type='dwi',
                                                  extensions=["nii.gz", "nii"])
+
+        pos = []; neg = []
+        PEdir = None; echospacing = None
+
+        for idx, dwi in enumerate(dwis):
+            metadata = layout.get_metadata(dwi.filename)
+            # get phaseencodingdirection
+            phaseenc = metadata['PhaseEncodingDirection']
+            acq = 1 if phaseenc[0]=='i' else 2
+            if not PEdir:
+                PEdir = acq
+            if PEdir != acq:
+                raise RuntimeError("Not all dwi images have the same encoding direction (both LR and AP). Not implemented.")
+            # get pos/neg
+            if len(phaseenc)>1:
+                neg.append(dwi.filename)
+            else:
+                pos.append(dwi.filename)
+            # get echospacing
+            if not echospacing:
+                echospacing = metadata['EffectiveEchoSpacing']*1000.
+            if echospacing != metadata['EffectiveEchoSpacing']*1000.:
+                raise RuntimeError("Not all dwi images have the same echo spacing. Not implemented.")
+
+        posdata = "@".join(pos)
+        negdata = "@".join(neg)
+
+        dif_stages_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
+                                                 path=args.output_dir,
+                                                 subject="sub-%s"%subject_label,
+                                                 posData=posdata,
+                                                 negData=negdata,
+                                                 echospacing=echospacing,
+                                                 n_cpus=args.n_cpus,
+                                                 PEdir=PEdir))
+                       ])
+
+        for stage, stage_func in dif_stages_dict.iteritems():
+            if stage in args.stages:
+                stage_func()

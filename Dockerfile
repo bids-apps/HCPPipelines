@@ -62,7 +62,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV PATH=/usr/lib/fsl/5.0:$PATH
 ENV FSLMULTIFILEQUIT=TRUE
 ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
@@ -74,7 +74,7 @@ RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 ENV CARET7DIR=/usr/bin
 
 # Install HCP Pipelines
-RUN apt-get -y update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends python-numpy && \
     wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
@@ -99,25 +99,42 @@ ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
 
+# Install FIX, along with dependencies
+RUN apt-get update && apt-get install -y build-essential libpcre3 libpcre3-dev  fort77 xorg-dev libbz2-dev liblzma-dev libblas-dev gfortran gcc-multilib gobjc++ libreadline-dev bzip2 libcurl4-gnutls-dev default-jdk gdebi
+RUN cd /opt && \
+    wget http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz && \
+    tar zxvf fix.tar.gz && \
+    rm fix.tar.gz
+RUN cd /opt && \
+    wget https://cloud.r-project.org/bin/linux/ubuntu/trusty/r-base-core_3.4.4-1trusty0_amd64.deb && \
+    wget https://cloud.r-project.org/bin/linux/ubuntu/trusty/r-base-dev_3.4.4-1trusty0_all.deb && \
+    gdebi -n r-base-core_3.4.4-1trusty0_amd64.deb && \
+    gdebi -n r-base-dev_3.4.4-1trusty0_all.deb
+RUN R --vanilla -e "install.packages('kernlab', repos='http://cran.us.r-project.org')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('party', repos='http://cran.us.r-project.org')" -e "install.packages('e1071', repos='http://cran.us.r-project.org')" -e "install.packages('randomForest', repos='http://cran.us.r-project.org')"
+RUN cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp && \
+    cd /tmp && \
+    unzip MCRInstaller.zip
+COPY MCR_installer_input.txt /tmp/MCR_installer_input.txt
+RUN  cd /tmp && ./install -mode silent -inputFile MCR_installer_input.txt
+
+
+
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.5.1
 RUN pip install --upgrade pybids
 ENV PYTHONPATH=""
+
+RUN mv /opt/fix* /opt/fix
+ENV FSL_FIXDIR opt/fix
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
 
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
-COPY mri_convert /mri_convert
-COPY mri_convert.bin /mri_convert.bin
-COPY sources.sh /sources.sh
 
-RUN cp /sources.sh /opt/freesurfer/sources.sh && \
-    cp /mri_convert /opt/freesurfer/bin/mri_convert && \
-    cp /mri_convert.bin /opt/freesurfer/bin/mri_convert.bin
-
-RUN chmod 555 /IntendedFor.py
+COPY SetUpHCPPipeline.sh /SetUpHCPPipeline.sh
+COPY settings.sh /settings.sh
+RUN cp /settings.sh /opt/fix*/settings.sh
 
 ENTRYPOINT ["./run.py"]
-
