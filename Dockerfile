@@ -132,11 +132,9 @@ RUN chmod 555 /run.py
 
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
+
 COPY SetUpHCPPipeline.sh /SetUpHCPPipeline.sh
 COPY settings.sh /settings.sh
 RUN cp /settings.sh /opt/fix*/settings.sh
 
-
-RUN chmod 555 /IntendedFor.py
-RUN chmod 555 /SetUpHCPPipeline.sh
-RUN chmod 555 /settings.sh
+ENTRYPOINT ["./run.py"]
