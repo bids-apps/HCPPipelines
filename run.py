@@ -173,11 +173,9 @@ def run_diffusion_processsing(**args):
 def run_ICAFIX_processing(**args):
     args.update(os.environ)
     cmd = '{FSL_FIXDIR}/hcp_fix ' + \
-        'fmri ' + \
-        'high pass ' + \
-        '--EnvironmentScript="{EnvironmentScript}"' + \
-        '--FixDir="{FixDir}" ' + \
-        '--RunLocal="{RunLocal}"'
+        '{path}/{subject}/MNINonLinear/Results/{fmriname}/{fmriname}.nii.gz ' + \
+        '{high_pass} ' + \
+        '{training_data}'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -406,6 +404,14 @@ if args.analysis_level == "participant":
                 fmrires = float(min(zooms[:3]))
                 fmrires = "2"
 
+                # determine which fix training data to use based on resolution and TR
+
+                if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
+                    highpass = "2000"
+                    training_data = "HCP_hp2000.RData"
+                    # TODO figure out how to know where the fmriVolume and fmriSurface is being outputted
+                    # input_file=
+
                 func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                        path=args.output_dir,
                                                                        subject="sub-%s/ses-%s" % (subject_label, ses_label),
@@ -427,8 +433,13 @@ if args.analysis_level == "participant":
                                                                         fmrires=fmrires,
                                                                         n_cpus=args.n_cpus,
                                                                         grayordinatesres=grayordinatesres,
-                                                                        lowresmesh=lowresmesh))
-                                                ])
+                                                                        lowresmesh=lowresmesh)),
+                                                ("ICAFIX", partial(run_ICAFIX_processing,
+                                                                   path=args.output_dir,
+                                                                   subject="sub-%s/ses-%s" % (subject_label, ses_label),
+                                                                   fmriname=fmriname,
+                                                                   high_pass=highpass,
+                                                                   training_data=training_data))])
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
                         stage_func()
