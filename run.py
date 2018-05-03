@@ -32,6 +32,10 @@ def run(command, env={}, cwd=None):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
+    #change ownership of completed processing
+    change_owner ='chown -R `stat -c "%u:%g" ' + args.output_dir + '` ' + args.output_dir
+    os.system(change_owner)
+
 grayordinatesres = "2" # This is currently the only option for which the is an atlas
 lowresmesh = 32
 
@@ -72,6 +76,7 @@ def run_pre_freesurfer(**args):
     '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
 
 def run_freesurfer(**args):
     args.update(os.environ)
