@@ -407,7 +407,7 @@ if args.analysis_level == "participant":
 
                 zooms = nibabel.load(fmritcs).get_header().get_zooms()
                 fmrires = float(min(zooms[:3]))
-                reptime = "%.1f" % zooms[3]
+                reptime = float("%.1f" % zooms[3])
                 fmrires = "2"
 
                 # determine which fix training data to use based on resolution and TR
