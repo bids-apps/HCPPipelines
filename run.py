@@ -407,6 +407,7 @@ if args.analysis_level == "participant":
 
                 zooms = nibabel.load(fmritcs).get_header().get_zooms()
                 fmrires = float(min(zooms[:3]))
+                reptime = "%.1f" % zooms[3]
                 fmrires = "2"
 
                 # determine which fix training data to use based on resolution and TR
@@ -414,8 +415,6 @@ if args.analysis_level == "participant":
                 if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
                     highpass = "2000"
                     training_data = "HCP_hp2000.RData"
-                    # TODO figure out how to know where the fmriVolume and fmriSurface is being outputted
-                    # input_file=
 
                 func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
