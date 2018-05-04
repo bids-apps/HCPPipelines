@@ -245,6 +245,9 @@ if args.analysis_level == "participant":
             ses_dirs = glob(os.path.join(args.bids_dir, "sub-" + subject_label, "ses-*"))
             ses_to_analyze = [ses_dir.split("-")[-1] for ses_dir in ses_dirs]
             for ses_label in ses_to_analyze:
+                if not os.path.exists(os.path.join(args.output_dir,"sub-" + subject_label, "ses-" + ses_label)):
+                    os.makedirs(os.path.join(args.output_dir,"sub-" + subject_label))
+                    os.makedirs(os.path.join(args.output_dir,"sub-" + subject_label, "ses-" + ses_label))
                 t1ws = [f.filename for f in layout.get(subject=subject_label, session=ses_label,
                                                        type='T1w',
                                                        extensions=["nii.gz", "nii"])]
