@@ -610,7 +610,7 @@ if args.analysis_level == "participant":
                             biascorrection = "NONE"
 
                 zooms = nibabel.load(fmritcs).get_header().get_zooms()
-                reptime = "%.1f" % zooms[3]
+                reptime = float("%.1f" % zooms[3])
                 fmrires = float(min(zooms[:3]))
                 fmrires = "2"
 
