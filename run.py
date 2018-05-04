@@ -416,37 +416,37 @@ if args.analysis_level == "participant":
                     highpass = "2000"
                     training_data = "HCP_hp2000.RData"
 
-                    func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
-                                                                           path=args.output_dir + "/sub-%s" % (subject_label),
-                                                                           subject="ses-%s" % (ses_label),
-                                                                           fmriname=fmriname,
-                                                                           fmritcs=fmritcs,
-                                                                           fmriscout=fmriscout,
-                                                                           SEPhaseNeg=SEPhaseNeg,
-                                                                           SEPhasePos=SEPhasePos,
-                                                                           echospacing=echospacing,
-                                                                           unwarpdir=unwarpdir,
-                                                                           fmrires=fmrires,
-                                                                           dcmethod=dcmethod,
-                                                                           biascorrection=biascorrection,
-                                                                           n_cpus=args.n_cpus)),
-                                                    ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
-                                                                            path=args.output_dir + "/sub-%s" % (subject_label),
-                                                                            subject="ses-%s" % (ses_label),
-                                                                            fmriname=fmriname,
-                                                                            fmrires=fmrires,
-                                                                            n_cpus=args.n_cpus,
-                                                                            grayordinatesres=grayordinatesres,
-                                                                            lowresmesh=lowresmesh)),
-                                                    ("ICAFIX", partial(run_ICAFIX_processing,
+                func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
                                                                        subject="ses-%s" % (ses_label),
                                                                        fmriname=fmriname,
-                                                                       high_pass=highpass,
-                                                                       training_data=training_data))])
-                    for stage, stage_func in func_stages_dict.iteritems():
-                        if stage in args.stages:
-                            stage_func()
+                                                                       fmritcs=fmritcs,
+                                                                       fmriscout=fmriscout,
+                                                                       SEPhaseNeg=SEPhaseNeg,
+                                                                       SEPhasePos=SEPhasePos,
+                                                                       echospacing=echospacing,
+                                                                       unwarpdir=unwarpdir,
+                                                                       fmrires=fmrires,
+                                                                       dcmethod=dcmethod,
+                                                                       biascorrection=biascorrection,
+                                                                       n_cpus=args.n_cpus)),
+                                                ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
+                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                        subject="ses-%s" % (ses_label),
+                                                                        fmriname=fmriname,
+                                                                        fmrires=fmrires,
+                                                                        n_cpus=args.n_cpus,
+                                                                        grayordinatesres=grayordinatesres,
+                                                                        lowresmesh=lowresmesh)),
+                                                ("ICAFIX", partial(run_ICAFIX_processing,
+                                                                   path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                   subject="ses-%s" % (ses_label),
+                                                                   fmriname=fmriname,
+                                                                   high_pass=highpass,
+                                                                   training_data=training_data))])
+                for stage, stage_func in func_stages_dict.iteritems():
+                    if stage in args.stages:
+                        stage_func()
 
             dwis = layout.get(subject=subject_label, type='dwi',
                               extensions=["nii.gz", "nii"])
@@ -652,7 +652,6 @@ if args.analysis_level == "participant":
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
                         stage_func()
-            pdb.set_trace()
 
             dwis = layout.get(subject=subject_label, type='dwi',
                                                      extensions=["nii.gz", "nii"])
