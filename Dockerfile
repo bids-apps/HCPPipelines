@@ -107,7 +107,7 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
     MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
-RUN pip install pybids==0.0.1
+RUN pip install pybids==0.5.1
 ENV PYTHONPATH=""
 
 COPY run.py /run.py

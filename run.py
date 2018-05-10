@@ -207,7 +207,7 @@ args = parser.parse_args()
 
 run("bids-validator " + args.bids_dir)
 
-layout = BIDSLayout(args.bids_dir, exclude='derivatives/')
+layout = BIDSLayout(args.bids_dir, exclude=['derivatives'])
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
