@@ -11,21 +11,20 @@ dependencies:
     - "~/data"
 
   override:
-    - if [[ ! -d ~/data/hcp_example_bids ]]; then wget -c -O ${HOME}/hcp_example_bids.zip "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/58a1fd039ad5a101f23cd94f" && mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data; fi
-    - if [[ ! -d ~/data/lifespan_example_bids ]]; then wget -c -O ${HOME}/lifespan_example_bids.zip "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/58a1fc4eb83f6901f3b47a54" && mkdir -p ${HOME}/data && unzip ${HOME}/lifespan_example_bids.zip -d ${HOME}/data; fi
+    - if [[ ! -d ~/data/hcp_example_bids ]]; then wget -c -O ${HOME}/hcp_example_bids.zip "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/5a8efffe91b689000c9f5ce5" && mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data; fi
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - git describe --tags > version
     - docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} . :
-        timeout: 21600
+        timeout: 40000
     - mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
     - mkdir -p ${HOME}/outputs
 
 test:
   override:
     # print version
-    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset bids/${CIRCLE_PROJECT_REPONAME,,} --version
+    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset bids/${CIRCLE_PROJECT_REPONAME,,} --version
     # participant level tests for single session dataset
-    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7" --n_cpus 2:
+    - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --n_cpus 2:
         timeout: 21600
 deployment:
   hub:
