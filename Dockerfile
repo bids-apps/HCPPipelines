@@ -1,15 +1,6 @@
 # Use Ubuntu 14.04 LTS
 FROM ubuntu:trusty-20170119
 
-## Install the validator
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
-    apt-get remove -y curl && \
-    apt-get install -y nodejs
-
-RUN npm install -g bids-validator@0.19.2
-
 # Download FreeSurfer
 RUN apt-get -y update \
     && apt-get install -y wget && \
@@ -105,6 +96,15 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
     HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts \
     HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts \
     MSMBin=${HCPPIPEDIR}/MSMBinaries
+
+## Install the validator
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    apt-get remove -y curl && \
+    apt-get install -y nodejs
+
+RUN npm install -g bids-validator@0.26.11
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
 RUN pip install pybids==0.5.1
