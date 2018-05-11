@@ -353,12 +353,12 @@ if args.analysis_level == "participant":
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
 
-            fieldmap_set = layout.get_fieldmap(fmritcs)
-            if fieldmap_set and fieldmap_set["type"] == "epi":
+            fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
+            if fieldmap_set and len(fieldmap_set) == 2 and all(item["type"] == "epi" for item in fieldmap_set):
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
-                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                for fieldmap in fieldmap_set:
+                    enc_dir = layout.get_metadata(fieldmap["epi"])["PhaseEncodingDirection"]
                     if "-" in enc_dir:
                         SEPhaseNeg = fieldmap
                     else:
