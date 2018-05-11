@@ -27,25 +27,25 @@ RUN apt-get -y update \
     --exclude='freesurfer/average/mult-comp-cor' \
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt' && \
-    apt-get install -y tcsh bc tar libgomp1 perl-modules curl 
+    apt-get install -y tcsh bc tar libgomp1 perl-modules curl
 
 # Set up the environment
-ENV OS Linux
-ENV FS_OVERRIDE 0
-ENV FIX_VERTEX_AREA=
-ENV SUBJECTS_DIR /opt/freesurfer/subjects
-ENV FSF_OUTPUT_FORMAT nii.gz
-ENV MNI_DIR /opt/freesurfer/mni
-ENV LOCAL_DIR /opt/freesurfer/local
-ENV FREESURFER_HOME /opt/freesurfer
-ENV FSFAST_HOME /opt/freesurfer/fsfast
-ENV MINC_BIN_DIR /opt/freesurfer/mni/bin
-ENV MINC_LIB_DIR /opt/freesurfer/mni/lib
-ENV MNI_DATAPATH /opt/freesurfer/mni/data
-ENV FMRI_ANALYSIS_DIR /opt/freesurfer/fsfast
-ENV PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
-ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
-ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+ENV OS=Linux \
+    FS_OVERRIDE=0 \
+    FIX_VERTEX_AREA= \
+    SUBJECTS_DIR=/opt/freesurfer/subjects \
+    FSF_OUTPUT_FORMAT=nii.gz \
+    MNI_DIR=/opt/freesurfer/mni \
+    LOCAL_DIR=/opt/freesurfer/local \
+    FREESURFER_HOME=/opt/freesurfer \
+    FSFAST_HOME=/opt/freesurfer/fsfast \
+    MINC_BIN_DIR=/opt/freesurfer/mni/bin \
+    MINC_LIB_DIR=/opt/freesurfer/mni/lib \
+    MNI_DATAPATH=/opt/freesurfer/mni/data \
+    FMRI_ANALYSIS_DIR=/opt/freesurfer/fsfast \
+    PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
+    MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
+    PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 
 # Install FSL 5.0.9
 RUN apt-get update && \
@@ -57,15 +57,16 @@ RUN apt-get update && \
 
 # Configure environment
 ENV FSLDIR=/usr/share/fsl/5.0
-ENV FSL_DIR="${FSLDIR}"
-ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV PATH=/usr/lib/fsl/5.0:$PATH
-ENV FSLMULTIFILEQUIT=TRUE
-ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-ENV FSLTCLSH=/usr/bin/tclsh
-ENV FSLWISH=/usr/bin/wish
-ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV FSL_DIR="${FSLDIR}" \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    PATH=/usr/lib/fsl/5.0:$PATH \
+    FSLMULTIFILEQUIT=TRUE \
+    POSSUMDIR=/usr/share/fsl/5.0 \
+    LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH \
+    FSLTCLSH=/usr/bin/tclsh \
+    FSLWISH=/usr/bin/wish \
+    FSLOUTPUTTYPE=NIFTI_GZ
+
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
 # Install Connectome Workbench
@@ -73,34 +74,40 @@ RUN apt-get update && apt-get -y install connectome-workbench=1.2.3-1~nd14.04+1
 
 ENV CARET7DIR=/usr/bin
 
-# Install HCP Pipelines
+# Install HCP Pipelines and MSM binaries
+WORKDIR /opt
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
-    wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
-    cd /opt/ && \
-    tar zxvf /pipelines.tar.gz && \
+    wget -q https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
+    tar zxf pipelines.tar.gz && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
-    rm /pipelines.tar.gz && \
-    cd / 
+    rm pipelines.tar.gz && \
+    wget -q https://www.doc.ic.ac.uk/~ecr05/MSM_HOCR_v1/MSM_HOCR_v1-download.tgz -O MSMs.tar.gz && \
+    tar zxf MSMs.tar.gz && \
+    rm MSMs.tar.gz && \
+    mv MSM_HOCR_v1/Ubuntu /opt/HCP-Pipelines/MSMBinaries && \
+    rm -rf MSM_HOCR_v1
+
+WORKDIR /
 
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
-ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates
-ENV HCPPIPEDIR_Bin=${HCPPIPEDIR}/global/binaries
-ENV HCPPIPEDIR_Config=${HCPPIPEDIR}/global/config
-ENV HCPPIPEDIR_PreFS=${HCPPIPEDIR}/PreFreeSurfer/scripts
-ENV HCPPIPEDIR_FS=${HCPPIPEDIR}/FreeSurfer/scripts
-ENV HCPPIPEDIR_PostFS=${HCPPIPEDIR}/PostFreeSurfer/scripts
-ENV HCPPIPEDIR_fMRISurf=${HCPPIPEDIR}/fMRISurface/scripts
-ENV HCPPIPEDIR_fMRIVol=${HCPPIPEDIR}/fMRIVolume/scripts
-ENV HCPPIPEDIR_tfMRI=${HCPPIPEDIR}/tfMRI/scripts
-ENV HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts
-ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
-ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
-ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
-ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
+    HCPPIPEDIR_Bin=${HCPPIPEDIR}/global/binaries \
+    HCPPIPEDIR_Config=${HCPPIPEDIR}/global/config \
+    HCPPIPEDIR_PreFS=${HCPPIPEDIR}/PreFreeSurfer/scripts \
+    HCPPIPEDIR_FS=${HCPPIPEDIR}/FreeSurfer/scripts \
+    HCPPIPEDIR_PostFS=${HCPPIPEDIR}/PostFreeSurfer/scripts \
+    HCPPIPEDIR_fMRISurf=${HCPPIPEDIR}/fMRISurface/scripts \
+    HCPPIPEDIR_fMRIVol=${HCPPIPEDIR}/fMRIVolume/scripts \
+    HCPPIPEDIR_tfMRI=${HCPPIPEDIR}/tfMRI/scripts \
+    HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts \
+    HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts \
+    HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts \
+    HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts \
+    MSMBin=${HCPPIPEDIR}/MSMBinaries
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools 
-RUN pip install pybids==0.0.1
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
+RUN pip install pybids==0.5.1
 ENV PYTHONPATH=""
 
 COPY run.py /run.py
