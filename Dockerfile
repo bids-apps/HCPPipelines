@@ -137,4 +137,4 @@ COPY SetUpHCPPipeline.sh /SetUpHCPPipeline.sh
 COPY settings.sh /settings.sh
 RUN cp /settings.sh /opt/fix*/settings.sh
 
-ENTRYPOINT ["./run.py"]
+ENTRYPOINT ["/run.py"]
