@@ -110,7 +110,7 @@ RUN cd /opt && \
     wget https://cloud.r-project.org/bin/linux/ubuntu/trusty/r-base-dev_3.4.4-1trusty0_all.deb && \
     gdebi -n r-base-core_3.4.4-1trusty0_amd64.deb && \
     gdebi -n r-base-dev_3.4.4-1trusty0_all.deb
-RUN R --vanilla -e "install.packages('kernlab', repos='http://cran.us.r-project.org')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('party', repos='http://cran.us.r-project.org')" -e "install.packages('e1071', repos='http://cran.us.r-project.org')" -e "install.packages('randomForest', repos='http://cran.us.r-project.org')"
+RUN R --vanilla -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
 RUN cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp && \
     cd /tmp && \
     unzip MCRInstaller.zip
