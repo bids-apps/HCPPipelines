@@ -443,6 +443,7 @@ if args.analysis_level == "participant":
                                                                         lowresmesh=lowresmesh)),
                                                 ("ICAFIX", partial(run_ICAFIX_processing,
                                                                    path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                   n_cpus=args.n_cpus,
                                                                    subject="ses-%s" % (ses_label),
                                                                    fmriname=fmriname,
                                                                    high_pass=highpass,

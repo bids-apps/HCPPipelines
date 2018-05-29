@@ -116,6 +116,7 @@ RUN cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp && \
     unzip MCRInstaller.zip
 COPY MCR_installer_input.txt /tmp/MCR_installer_input.txt
 RUN  cd /tmp && ./install -mode silent -inputFile MCR_installer_input.txt
+RUN apt-get build-dep -y gridengine && apt-get update -y
 
 
 
