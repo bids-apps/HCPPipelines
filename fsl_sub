@@ -147,18 +147,18 @@ map_qname ()
 	# resource limits, and let SGE decide what queue matches
 	# (qsub wants the time limit in seconds)
 	queueCmd="$queueCmd -l h_rt=$(echo "$1 * 60" | bc)"
-    #if [ $1 -le 20 ] ; then
-	#queue=veryshort.q
-    #elif [ $1 -le 120 ] ; then
-	#queue=short.q
-    #elif [ $1 -le 1440 ] ; then
-	#queue=long.q
-    #else
-	#queue=verylong.q
-    #fi
-    #queueCmd=" -q $queue "
+    	if [ $1 -le 20 ] ; then
+		queue=veryshort.q
+    	elif [ $1 -le 120 ] ; then
+		queue=short.q
+    	elif [ $1 -le 1440 ] ; then
+		queue=long.q
+    	else
+		queue=verylong.q
+    	fi
+    	queueCmd=" -q $queue "
 
-    #echo "Estimated time was $1 mins: queue name is $queue"
+    	echo "Estimated time was $1 mins: queue name is $queue"
 }
 
 ###########################################################################
