@@ -127,6 +127,7 @@ ENV PYTHONPATH=""
 
 RUN mv /opt/fix* /opt/fix
 ENV FSL_FIXDIR /opt/fix
+ENV XAPPLRESDIR /usr/local/R2014a/v83/X11/app-defaults
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
