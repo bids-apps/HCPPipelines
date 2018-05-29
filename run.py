@@ -182,11 +182,28 @@ def run_ICAFIX_processing(**args):
         '{high_pass} ' + \
         '{training_data}'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
+                                    "XAPPLRESDIR": "/usr/local/R2014a/v83/X11/app-defaults",
+                                    "LD_LIBRARY_PATH": "/usr/local/R2014a/v83/runtime/glnxa64:/usr/local/R2014a/v83/bin/glnxa64:/usr/local/R2014a/v83/sys/os/glnxa64:${LD_LIBRARY_PATH}"})
+
+def run_PostFix_processing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/PostFix/PostFix.sh ' + \
+          '--path="{path}" ' + \
+          '--subject="{subject}" ' + \
+          '--fmri-name={fmriname} ' + \
+          '--high-pass={high_pass} ' + \
+          '--template-scene-dual-screen={HCPPIPEDIR}/PostFix/PostFixScenes/ICA_Classification_DualScreenTemplate.scene ' + \
+          '--template-scene-single-screen={HCPPIPEDIR}/PostFix/PostFixScenes/ICA_Classification_SingleScreenTemplate.scene'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
+                                    "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
+                                    "LD_LIBRARY_PATH": "/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64:${LD_LIBRARY_PATH}",
+                                    "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
+parser = argparse.ArgumentParser(description='HCP Pipelines BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
@@ -213,7 +230,7 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                             'fMRIVolume', 'fMRISurface', 'ICAFIX'
                             'DiffusionPreprocessing'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
-                    required=True)
+                    required=True, default='CUSSPUD/4LAA')
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 
@@ -418,6 +435,8 @@ if args.analysis_level == "participant":
                 if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
                     highpass = "2000"
                     training_data = "HCP_hp2000.RData"
+
+                #TODO: Add PostFix functionality in func_stages_dict below
 
                 func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                        path=args.output_dir + "/sub-%s" % (subject_label),

@@ -111,12 +111,22 @@ RUN cd /opt && \
     gdebi -n r-base-core_3.4.4-1trusty0_amd64.deb && \
     gdebi -n r-base-dev_3.4.4-1trusty0_all.deb
 RUN R --vanilla -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
-RUN cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp && \
-    cd /tmp && \
+RUN mkdir /tmp/v83 && \
+    cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp/v83 && \
+    cd /tmp/v83 && \
     unzip MCRInstaller.zip
-COPY MCR_installer_input.txt /tmp/MCR_installer_input.txt
-RUN  cd /tmp && ./install -mode silent -inputFile MCR_installer_input.txt
+COPY MCR_installer_input_v83.txt /tmp/v83/MCR_installer_input.txt
+RUN  cd /tmp/v83 && ./install -mode silent -inputFile MCR_installer_input.txt
 RUN apt-get build-dep -y gridengine && apt-get update -y
+
+# Ensure Dependencies for PostFix are met
+RUN apt-get update
+RUN mkdir /tmp/v81 && \
+    cd /tmp/v81 && \
+    wget http://ssd.mathworks.com/supportfiles/MCR_Runtime/R2013a/MCR_R2013a_glnxa64_installer.zip && \
+    unzip MCR_R2013a_glnxa64_installer.zip
+COPY MCR_installer_input_v81.txt /tmp/v81/MCR_installer_input.txt
+
 
 
 
@@ -127,7 +137,8 @@ ENV PYTHONPATH=""
 
 RUN mv /opt/fix* /opt/fix
 ENV FSL_FIXDIR /opt/fix
-ENV XAPPLRESDIR /usr/local/R2014a/v83/X11/app-defaults
+#ENV XAPPLRESDIR /usr/local/R2014a/v83/X11/app-defaults
+#ENV matlab_compiler_runtime /usr/local/R2014a/v83
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
