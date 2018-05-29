@@ -126,7 +126,7 @@ RUN pip install --upgrade pybids
 ENV PYTHONPATH=""
 
 RUN mv /opt/fix* /opt/fix
-ENV FSL_FIXDIR opt/fix
+ENV FSL_FIXDIR /opt/fix
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
