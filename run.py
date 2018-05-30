@@ -200,8 +200,17 @@ def run_PostFix_processing(**args):
                                     "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
                                     "LD_LIBRARY_PATH": "/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64:${LD_LIBRARY_PATH}",
                                     "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
+def run_RestingStateStats_processing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/RestingStateStats/RestingStateStats.sh ' + \
+          '--path="{path}" ' + \
+          '--subject="{subject}" ' + \
+          '--fmri-name={fmriname} ' + \
+          '--high-pass={high_pass} ' + \
+          '--reg-name={reg_name} ' + \
+          '--low-res-mesh="{lowresmesh:d}" ' + \
 
-__version__ = open('/version').read()
+          __version__ = open('/version').read()
 
 parser = argparse.ArgumentParser(description='HCP Pipelines BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
@@ -436,7 +445,7 @@ if args.analysis_level == "participant":
                     highpass = "2000"
                     training_data = "HCP_hp2000.RData"
 
-                #TODO: Add PostFix functionality in func_stages_dict below
+                # TODO: Add PostFix functionality in func_stages_dict below
 
                 func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
@@ -466,7 +475,14 @@ if args.analysis_level == "participant":
                                                                    subject="ses-%s" % (ses_label),
                                                                    fmriname=fmriname,
                                                                    high_pass=highpass,
-                                                                   training_data=training_data))])
+                                                                   training_data=training_data)),
+                                                ("PostFix", partial(run_PostFix_processing,
+                                                                    path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                    n_cpus=args.n_cpus,
+                                                                    subject="ses-%s" % (ses_label),
+                                                                    fmriname=fmriname,
+                                                                    high_pass=highpass,
+                                                                    ))])
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
                         stage_func()
