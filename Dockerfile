@@ -146,8 +146,6 @@ RUN chmod 555 /run.py
 COPY version /version
 COPY IntendedFor.py /IntendedFor.py
 COPY fsl_sub /usr/lib/fsl/5.0/fsl_sub
-
-COPY SetUpHCPPipeline.sh /SetUpHCPPipeline.sh
 COPY settings.sh /opt/fix/settings.sh
 
 ENTRYPOINT ["/run.py"]
