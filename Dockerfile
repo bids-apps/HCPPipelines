@@ -26,7 +26,7 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV PATH=/usr/lib/fsl/5.0:$PATH
 ENV FSLMULTIFILEQUIT=TRUE
 ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:/usr/local/R2014a/v83/runtime/glnxa64:/usr/local/R2014a/v83/bin/glnxa64:/usr/local/R2014a/v83/sys/os/glnxa64:/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
@@ -118,6 +118,7 @@ RUN mkdir /tmp/v81 && \
     wget http://ssd.mathworks.com/supportfiles/MCR_Runtime/R2013a/MCR_R2013a_glnxa64_installer.zip && \
     unzip MCR_R2013a_glnxa64_installer.zip
 COPY MCR_installer_input_v81.txt /tmp/v81/MCR_installer_input.txt
+RUN  cd /tmp/v81 && ./install -mode silent -inputFile MCR_installer_input.txt
 
 #Create necessary environment variables
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
