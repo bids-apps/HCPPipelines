@@ -1,6 +1,36 @@
 # Use Ubuntu 14.04 LTS
 FROM ubuntu:trusty-20170119
 
+# Configure environment
+ENV OS Linux
+ENV FS_OVERRIDE 0
+ENV FIX_VERTEX_AREA=
+ENV SUBJECTS_DIR /opt/freesurfer/subjects
+ENV FSF_OUTPUT_FORMAT nii.gz
+ENV MNI_DIR /opt/freesurfer/mni
+ENV LOCAL_DIR /opt/freesurfer/local
+ENV FREESURFER_HOME /opt/freesurfer
+ENV FSFAST_HOME /opt/freesurfer/fsfast
+ENV MINC_BIN_DIR /opt/freesurfer/mni/bin
+ENV MINC_LIB_DIR /opt/freesurfer/mni/lib
+ENV MNI_DATAPATH /opt/freesurfer/mni/data
+ENV FMRI_ANALYSIS_DIR /opt/freesurfer/fsfast
+ENV PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
+ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
+ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+ENV PYTHONPATH=""
+ENV FSL_FIXDIR /opt/fix
+ENV FSLDIR=/usr/share/fsl/5.0
+ENV FSL_DIR="${FSLDIR}"
+ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV PATH=/usr/lib/fsl/5.0:$PATH
+ENV FSLMULTIFILEQUIT=TRUE
+ENV POSSUMDIR=/usr/share/fsl/5.0
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
+ENV FSLTCLSH=/usr/bin/tclsh
+ENV FSLWISH=/usr/bin/wish
+ENV FSLOUTPUTTYPE=NIFTI_GZ
+
 ## Install the validator
 RUN apt-get update && \
     apt-get install -y curl && \
@@ -33,8 +63,9 @@ RUN apt-get -y update \
 # Install FSL 5.0.9
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
-    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9
+    curl -sSL http://neuro.debian.net/lists/trusty.us-ca.full >> /etc/apt/sources.list.d/neurodebian.sources.list
+
+RUN apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9
 
 RUN apt-get update && \
     apt-get install -y fsl-core=5.0.9-4~nd14.04+1
@@ -88,40 +119,7 @@ RUN mkdir /tmp/v81 && \
     unzip MCR_R2013a_glnxa64_installer.zip
 COPY MCR_installer_input_v81.txt /tmp/v81/MCR_installer_input.txt
 
-# Install python Dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
-RUN pip install pybids==0.5.1
-RUN pip install --upgrade pybids
-
-# Configure environment
-ENV OS Linux
-ENV FS_OVERRIDE 0
-ENV FIX_VERTEX_AREA=
-ENV SUBJECTS_DIR /opt/freesurfer/subjects
-ENV FSF_OUTPUT_FORMAT nii.gz
-ENV MNI_DIR /opt/freesurfer/mni
-ENV LOCAL_DIR /opt/freesurfer/local
-ENV FREESURFER_HOME /opt/freesurfer
-ENV FSFAST_HOME /opt/freesurfer/fsfast
-ENV MINC_BIN_DIR /opt/freesurfer/mni/bin
-ENV MINC_LIB_DIR /opt/freesurfer/mni/lib
-ENV MNI_DATAPATH /opt/freesurfer/mni/data
-ENV FMRI_ANALYSIS_DIR /opt/freesurfer/fsfast
-ENV PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
-ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
-ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
-ENV PYTHONPATH=""
-ENV FSL_FIXDIR /opt/fix
-ENV FSLDIR=/usr/share/fsl/5.0
-ENV FSL_DIR="${FSLDIR}"
-ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV PATH=/usr/lib/fsl/5.0:$PATH
-ENV FSLMULTIFILEQUIT=TRUE
-ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
-ENV FSLTCLSH=/usr/bin/tclsh
-ENV FSLWISH=/usr/bin/wish
-ENV FSLOUTPUTTYPE=NIFTI_GZ
+#Create necessary environment variables
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 ENV CARET7DIR=/usr/bin
 ENV HCPPIPEDIR=/opt/HCP-Pipelines
@@ -139,6 +137,11 @@ ENV HCPPIPEDIR_dMRITract=${HCPPIPEDIR}/DiffusionTractography/scripts
 ENV HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts
 ENV HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts
 ENV MSMBin=${HCPPIPEDIR}/MSMBinaries
+
+# Install python Dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
+RUN pip install pybids==0.5.1
+RUN pip install --upgrade pybids
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
