@@ -81,10 +81,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends python-numpy && \
     wget https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
     cd /opt/ && \
-    tar zxvf /pipelines.tar.gz && \
-    mv /opt/Pipelines-* /opt/HCP-Pipelines && \
-    rm /pipelines.tar.gz && \
-    cd / 
+    mkdir /opt/HCP-Pipelines && \
+    tar zxf /pipelines.tar.gz -C /opt/HCP-Pipelines --strip-components=1 && \
+    rm /pipelines.tar.gz
 
 # Install FIX
 RUN apt-get update && apt-get install -y build-essential libpcre3 libpcre3-dev  fort77 xorg-dev libbz2-dev liblzma-dev libblas-dev gfortran gcc-multilib gobjc++ libreadline-dev bzip2 libcurl4-gnutls-dev default-jdk gdebi
@@ -151,5 +150,6 @@ COPY version /version
 COPY IntendedFor.py /IntendedFor.py
 COPY fsl_sub /usr/lib/fsl/5.0/fsl_sub
 COPY settings.sh /opt/fix/settings.sh
+COPY 360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii
 
 ENTRYPOINT ["/run.py"]

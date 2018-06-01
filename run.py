@@ -6,14 +6,12 @@ import shutil
 import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
-from shutil import rmtree
 import pdb
 import subprocess
-import nibabel as nip
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
-from IntendedFor import setup,IntendedFor
+from IntendedFor import setup
 
 
 def run(command, env={}, cwd=None):
@@ -33,11 +31,12 @@ def run(command, env={}, cwd=None):
         raise Exception("Non zero return code: %d"%process.returncode)
 
     #change ownership of completed processing
-    change_owner ='chown -R `stat -c "%u:%g" ' + args.output_dir + '` ' + args.output_dir
-    os.system(change_owner)
+    #change_owner ='chown -R `stat -c "%u:%g" ' + args.output_dir + '` ' + args.output_dir
+    #os.system(change_owner)
 
 grayordinatesres = "2" # This is currently the only option for which the is an atlas
 lowresmesh = 32
+dlabel_file = "/360CortSurf_19Vol_parcel.dlabel.nii"
 
 def run_pre_freesurfer(**args):
     args.update(os.environ)
@@ -198,16 +197,32 @@ def run_PostFix_processing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
                                     "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
                                     "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
-#def run_RestingStateStats_processing(**args):
-#    args.update(os.environ)
-#    cmd = '{HCPPIPEDIR}/RestingStateStats/RestingStateStats.sh ' + \
-#          '--path="{path}" ' + \
-#          '--subject="{subject}" ' + \
-#          '--fmri-name={fmriname} ' + \
-#          '--high-pass={high_pass} ' + \
-#          '--reg-name={reg_name} ' + \
-#          '--low-res-mesh="{lowresmesh:d}" ' + \
-#          '--final-fmri-res='
+
+def run_RestingStateStats_processing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/RestingStateStats/RestingStateStats.sh ' + \
+    '--path="{path}" ' + \
+    '--subject="{subject}" ' + \
+    '--fmri-name={fmriname} ' + \
+    '--high-pass={high_pass} ' + \
+    '--reg-name="FS" ' + \
+    '--low-res-mesh="{lowresmesh:d}" ' + \
+    '--final-fmri-res={fmrires:s} ' + \
+    '--brain-ordinates-res="{grayordinatesres:s}" ' + \
+    '--smoothing-fwhm={fmrires:s} ' + \
+    '--output-proc-string="finished" ' + \
+    '--dlabel-file={dlabel_file} ' + \
+    '--matlab-run-mode=0 ' + \
+    '--bc-mode="REVERT" ' + \
+    '--out-string="stats" ' + \
+    '--wm="NONE" ' + \
+    '--csf="NONE"'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
+                                "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
+                                "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
+
+
 
 __version__ = open('/version').read()
 
@@ -233,9 +248,9 @@ parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
-                                       'fMRISurface', 'ICAFIX', 'PostFix', 'DiffusionPreprocessing'],
+                                       'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats', 'DiffusionPreprocessing'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
-                            'fMRIVolume', 'fMRISurface', 'ICAFIX'
+                            'fMRIVolume', 'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats',
                             'DiffusionPreprocessing'])
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     default='CUSSPUD/4LAA')
@@ -478,14 +493,61 @@ if args.analysis_level == "participant":
                                                                     n_cpus=args.n_cpus,
                                                                     subject="ses-%s" % (ses_label),
                                                                     fmriname=fmriname,
-                                                                    high_pass=highpass,
-                                                                    ))])
+                                                                    high_pass=highpass)),
+                                                ("RestingStateStats", partial(run_RestingStateStats_processing,
+                                                                             path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                             n_cpus=args.n_cpus,
+                                                                             subject="ses-%s" % (ses_label),
+                                                                             fmriname=fmriname,
+                                                                             high_pass=highpass,
+                                                                             lowresmesh=lowresmesh,
+                                                                             fmrires=fmrires,
+                                                                             grayordinatesres=grayordinatesres,
+                                                                             dlabel_file=dlabel_file))])
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
                         stage_func()
+dwis = layout.get(subject=subject_label, type='dwi',
+                                                     extensions=["nii.gz", "nii"])
 
-            dwis = layout.get(subject=subject_label, type='dwi',
-                              extensions=["nii.gz", "nii"])
+            pos = []; neg = []
+            PEdir = None; echospacing = None
+
+            for idx, dwi in enumerate(dwis):
+                metadata = layout.get_metadata(dwi.filename)
+                # get phaseencodingdirection
+                phaseenc = metadata['PhaseEncodingDirection']
+                acq = 1 if phaseenc[0]=='i' else 2
+                if not PEdir:
+                    PEdir = acq
+                if PEdir != acq:
+                    raise RuntimeError("Not all dwi images have the same encoding direction (both LR and AP). Not implemented.")
+                # get pos/neg
+                if len(phaseenc)>1:
+                    neg.append(dwi.filename)
+                else:
+                    pos.append(dwi.filename)
+                # get echospacing
+                if not echospacing:
+                    echospacing = metadata['EffectiveEchoSpacing']*1000.
+                if echospacing != metadata['EffectiveEchoSpacing']*1000.:
+                    raise RuntimeError("Not all dwi images have the same echo spacing. Not implemented.")
+
+            posdata = "@".join(pos)
+            negdata = "@".join(neg)
+
+            dif_stages_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
+                                                                              path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                              n_cpus=args.n_cpus,
+                                                                              subject="ses-%s" % (ses_label),
+                                                                              posData=posdata,
+                                                                              negData=negdata,
+                                                                              echospacing=echospacing,
+                                                                              PEdir=PEdir))])
+
+            for stage, stage_func in dif_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
         else:
 
             t1ws = [f.filename for f in layout.get(subject=subject_label,
