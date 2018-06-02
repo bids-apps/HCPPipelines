@@ -6,12 +6,14 @@ import shutil
 import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
+from shutil import rmtree
 import pdb
 import subprocess
+import nibabel as nip
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
-from IntendedFor import setup
+from IntendedFor import setup,IntendedFor
 
 
 def run(command, env={}, cwd=None):
