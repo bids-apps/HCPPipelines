@@ -26,7 +26,8 @@ ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV PATH=/usr/lib/fsl/5.0:$PATH
 ENV FSLMULTIFILEQUIT=TRUE
 ENV POSSUMDIR=/usr/share/fsl/5.0
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:/usr/local/R2014a/v83/runtime/glnxa64:/usr/local/R2014a/v83/bin/glnxa64:/usr/local/R2014a/v83/sys/os/glnxa64:/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
+#/usr/local/R2014a/v83/runtime/glnxa64:/usr/local/R2014a/v83/bin/glnxa64:/usr/local/R2014a/v83/sys/os/glnxa64:/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
@@ -98,9 +99,12 @@ RUN cd /opt && \
     wget https://cloud.r-project.org/bin/linux/ubuntu/trusty/r-base-core_3.4.4-1trusty0_amd64.deb && \
     wget https://cloud.r-project.org/bin/linux/ubuntu/trusty/r-base-dev_3.4.4-1trusty0_all.deb && \
     gdebi -n r-base-core_3.4.4-1trusty0_amd64.deb && \
-    gdebi -n r-base-dev_3.4.4-1trusty0_all.deb
+    gdebi -n r-base-dev_3.4.4-1trusty0_all.deb && \
+    apt-get install -y libssl-dev 
 
-RUN R --vanilla -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
+#RUN R --vanilla -e "install.packages("https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', dependencies=TRUE)" -e "install.packages('ROCR', repos='http://cran.us.r-#project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
+
+RUN R --vanilla -e "install.packages('coin', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('strucchange', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', repos=NULL, type='source')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('class', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
 
 RUN mkdir /tmp/v83 && \
     cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp/v83 && \
