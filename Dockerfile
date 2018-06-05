@@ -27,7 +27,6 @@ ENV PATH=/usr/lib/fsl/5.0:$PATH
 ENV FSLMULTIFILEQUIT=TRUE
 ENV POSSUMDIR=/usr/share/fsl/5.0
 ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0
-#/usr/local/R2014a/v83/runtime/glnxa64:/usr/local/R2014a/v83/bin/glnxa64:/usr/local/R2014a/v83/sys/os/glnxa64:/usr/local/R2013a/v81/runtime/glnxa64:/usr/local/R2013a/v81/bin/glnxa64:/usr/local/R2013a/v81/sys/os/glnxa64:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/R2013a/v81/sys/java/jre/glnxa64/jre/lib/amd64
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLOUTPUTTYPE=NIFTI_GZ
@@ -104,14 +103,14 @@ RUN cd /opt && \
 
 #RUN R --vanilla -e "install.packages("https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', dependencies=TRUE)" -e "install.packages('ROCR', repos='http://cran.us.r-#project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
 
-RUN R --vanilla -e "install.packages('coin', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('strucchange', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', repos=NULL, type='source')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('class', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
+RUN R --vanilla -e "install.packages('coin', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('strucchange', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', repos=NULL, type='source')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz', repos=NULL, type='source')"
 
 RUN mkdir /tmp/v83 && \
     cp /opt/fix*/compiled/Linux/x86_64/MCRInstaller.zip /tmp/v83 && \
     cd /tmp/v83 && \
     unzip MCRInstaller.zip
 
-COPY MCR_installer_input_v83.txt /tmp/v83/MCR_installer_input.txt
+COPY modified_files/MCR_installer_input_v83.txt /tmp/v83/MCR_installer_input.txt
 RUN  cd /tmp/v83 && ./install -mode silent -inputFile MCR_installer_input.txt
 
 # Ensure Dependencies for PostFix are met
@@ -120,7 +119,7 @@ RUN mkdir /tmp/v81 && \
     cd /tmp/v81 && \
     wget http://ssd.mathworks.com/supportfiles/MCR_Runtime/R2013a/MCR_R2013a_glnxa64_installer.zip && \
     unzip MCR_R2013a_glnxa64_installer.zip
-COPY MCR_installer_input_v81.txt /tmp/v81/MCR_installer_input.txt
+COPY modified_files/MCR_installer_input_v81.txt /tmp/v81/MCR_installer_input.txt
 RUN  cd /tmp/v81 && ./install -mode silent -inputFile MCR_installer_input.txt
 
 #Create necessary environment variables
@@ -151,9 +150,14 @@ COPY run.py /run.py
 RUN chmod 555 /run.py
 
 COPY version /version
-COPY IntendedFor.py /IntendedFor.py
-COPY fsl_sub /usr/lib/fsl/5.0/fsl_sub
-COPY settings.sh /opt/fix/settings.sh
-COPY 360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii
+COPY modified_files/IntendedFor.py /IntendedFor.py
+COPY modified_files/fsl_sub /usr/lib/fsl/5.0/fsl_sub
+COPY modified_files/settings.sh /opt/fix/settings.sh
+COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii
+COPY modified_files/PostFix.sh /opt/HCP-Pipelines/PostFix/PostFix.sh
+COPY modified_files/run_prepareICAs.sh /opt/HCP-Pipelines/PostFix/Compiled_prepareICAs/distrib/run_prepareICAs.sh
+COPY modified_files/RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/RestingStateStats.sh
+COPY modified_files/run_RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/Compiled_RestingStateStats/distrib/run_RestingStateStats.sh
+
 
 ENTRYPOINT ["/run.py"]

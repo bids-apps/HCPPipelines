@@ -207,7 +207,7 @@ def run_RestingStateStats_processing(**args):
     '--subject="{subject}" ' + \
     '--fmri-name={fmriname} ' + \
     '--high-pass={high_pass} ' + \
-    '--reg-name="FS" ' + \
+    '--reg-name="NONE" ' + \
     '--low-res-mesh="{lowresmesh:d}" ' + \
     '--final-fmri-res={fmrires:s} ' + \
     '--brain-ordinates-res="{grayordinatesres:s}" ' + \
@@ -259,8 +259,8 @@ parser.add_argument('--license_key', help='FreeSurfer license key - letters and 
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 
-
 args = parser.parse_args()
+
 
 
 
@@ -482,33 +482,40 @@ if args.analysis_level == "participant":
                                                                         fmrires=fmrires,
                                                                         n_cpus=args.n_cpus,
                                                                         grayordinatesres=grayordinatesres,
-                                                                        lowresmesh=lowresmesh)),
-                                                ("ICAFIX", partial(run_ICAFIX_processing,
-                                                                   path=args.output_dir + "/sub-%s" % (subject_label),
-                                                                   n_cpus=args.n_cpus,
-                                                                   subject="ses-%s" % (ses_label),
-                                                                   fmriname=fmriname,
-                                                                   high_pass=highpass,
-                                                                   training_data=training_data)),
-                                                ("PostFix", partial(run_PostFix_processing,
-                                                                    path=args.output_dir + "/sub-%s" % (subject_label),
-                                                                    n_cpus=args.n_cpus,
-                                                                    subject="ses-%s" % (ses_label),
-                                                                    fmriname=fmriname,
-                                                                    high_pass=highpass)),
-                                                ("RestingStateStats", partial(run_RestingStateStats_processing,
-                                                                             path=args.output_dir + "/sub-%s" % (subject_label),
-                                                                             n_cpus=args.n_cpus,
-                                                                             subject="ses-%s" % (ses_label),
-                                                                             fmriname=fmriname,
-                                                                             high_pass=highpass,
-                                                                             lowresmesh=lowresmesh,
-                                                                             fmrires=fmrires,
-                                                                             grayordinatesres=grayordinatesres,
-                                                                             dlabel_file=dlabel_file))])
+                                                                        lowresmesh=lowresmesh))])
+                if 'rest' in fmritcs:
+                    rest_stages_dict = OrderedDict([("ICAFIX", partial(run_ICAFIX_processing,
+                                                                       path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                       n_cpus=args.n_cpus,
+                                                                       subject="ses-%s" % (ses_label),
+                                                                       fmriname=fmriname,
+                                                                       high_pass=highpass,
+                                                                       training_data=training_data)),
+                                                    ("PostFix", partial(run_PostFix_processing,
+                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                        n_cpus=args.n_cpus,
+                                                                        subject="ses-%s" % (ses_label),
+                                                                        fmriname=fmriname,
+                                                                        high_pass=highpass)),
+                                                    ("RestingStateStats", partial(run_RestingStateStats_processing,
+                                                                                 path=args.output_dir + "/sub-%s" % (subject_label),
+                                                                                 n_cpus=args.n_cpus,
+                                                                                 subject="ses-%s" % (ses_label),
+                                                                                 fmriname=fmriname,
+                                                                                 high_pass=highpass,
+                                                                                 lowresmesh=lowresmesh,
+                                                                                 fmrires=fmrires,
+                                                                                 grayordinatesres=grayordinatesres,
+                                                                                 dlabel_file=dlabel_file))])
+
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
-                            stage_func()
+                    stage_func()
+            for stage, stage_func in rest_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
+
+
             dwis = layout.get(subject=subject_label, type='dwi', extensions=["nii.gz", "nii"])
 
             pos = []
