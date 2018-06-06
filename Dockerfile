@@ -101,8 +101,6 @@ RUN cd /opt && \
     gdebi -n r-base-dev_3.4.4-1trusty0_all.deb && \
     apt-get install -y libssl-dev 
 
-#RUN R --vanilla -e "install.packages("https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', dependencies=TRUE)" -e "install.packages('ROCR', repos='http://cran.us.r-#project.org')" -e "install.packages('class', repos='http://cran.us.r-project.org')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz')"
-
 RUN R --vanilla -e "install.packages('coin', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('strucchange', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/kernlab/kernlab_0.9-24.tar.gz', repos=NULL, type='source')" -e "install.packages('ROCR', repos='http://cran.us.r-project.org', dependencies=TRUE)" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/e1071/e1071_1.6-7.tar.gz', repos=NULL, type='source')" -e "install.packages('https://cran.r-project.org/src/contrib/Archive/randomForest/randomForest_4.6-12.tar.gz', repos=NULL, type='source')"
 
 RUN mkdir /tmp/v83 && \
@@ -150,7 +148,7 @@ COPY run.py /run.py
 RUN chmod 555 /run.py
 
 COPY version /version
-COPY modified_files/IntendedFor.py /IntendedFor.py
+COPY IntendedFor.py /IntendedFor.py
 COPY modified_files/fsl_sub /usr/lib/fsl/5.0/fsl_sub
 COPY modified_files/settings.sh /opt/fix/settings.sh
 COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii

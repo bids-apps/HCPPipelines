@@ -13,7 +13,8 @@ import nibabel as nip
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
-from IntendedFor import setup,IntendedFor
+import sys
+from IntendedFor import setup
 
 
 def run(command, env={}, cwd=None):
@@ -280,6 +281,7 @@ else:
 if args.analysis_level == "participant":
     for subject_label in subjects_to_analyze:
         # before do anything else add IntendedFor field to fieldmap
+        pdb.set_trace()
         setup(os.path.join(args.bids_dir, "sub-"+subject_label))
 
         # if subject label has sessions underneath those need to be outputted into different directories
@@ -743,7 +745,7 @@ if args.analysis_level == "participant":
                                                           dcmethod=dcmethod,
                                                           biascorrection=biascorrection,
                                                           n_cpus=args.n_cpus)),
-                                    ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
+                                                ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
                                                            path=args.output_dir,
                                                            subject="sub-%s"%subject_label,
                                                            fmriname=fmriname,
@@ -751,7 +753,7 @@ if args.analysis_level == "participant":
                                                            n_cpus=args.n_cpus,
                                                            grayordinatesres=grayordinatesres,
                                                            lowresmesh=lowresmesh)),
-                                    ("ICAFIX", partial(run_ICAFIX_processing,
+                                                ("ICAFIX", partial(run_ICAFIX_processing,
                                                        input_file=input_file,
                                                        highpass=highpass,
                                                        training_data=training_data))])
