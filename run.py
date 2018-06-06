@@ -13,6 +13,7 @@ from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
 from IntendedFor import setup
+import pdb
 
 
 def run(command, env={}, cwd=None):
@@ -482,7 +483,7 @@ if args.analysis_level == "participant":
                                                                         n_cpus=args.n_cpus,
                                                                         grayordinatesres=grayordinatesres,
                                                                         lowresmesh=lowresmesh))])
-                if 'rest' in fmritcs:
+                if 'rest' in fmriname:
                     rest_stages_dict = OrderedDict([("ICAFIX", partial(run_ICAFIX_processing,
                                                                        path=args.output_dir + "/sub-%s" % (subject_label),
                                                                        n_cpus=args.n_cpus,
