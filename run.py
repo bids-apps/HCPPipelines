@@ -7,13 +7,11 @@ import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
-import pdb
 import subprocess
 import nibabel as nip
 from bids.grabbids import BIDSLayout
 from functools import partial
 from collections import OrderedDict
-import sys
 from IntendedFor import setup
 
 
@@ -281,7 +279,6 @@ else:
 if args.analysis_level == "participant":
     for subject_label in subjects_to_analyze:
         # before do anything else add IntendedFor field to fieldmap
-        pdb.set_trace()
         setup(os.path.join(args.bids_dir, "sub-"+subject_label))
 
         # if subject label has sessions underneath those need to be outputted into different directories
