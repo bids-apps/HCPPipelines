@@ -656,7 +656,7 @@ if args.analysis_level == "participant":
 
             struct_stages_dict = OrderedDict([("PreFreeSurfer", partial(run_pre_freesurfer,
                                                     path=args.output_dir,
-                                                    subject="sub-%s"%subject_label,
+                                                    subject="sub-%s" %subject_label,
                                                     t1ws=t1ws,
                                                     t2ws=t2ws,
                                                     n_cpus=args.n_cpus,
@@ -665,11 +665,11 @@ if args.analysis_level == "participant":
                                                     **fmap_args)),
                            ("FreeSurfer", partial(run_freesurfer,
                                                  path=args.output_dir,
-                                                 subject="sub-%s"%subject_label,
+                                                 subject="sub-%s" %subject_label,
                                                  n_cpus=args.n_cpus)),
                            ("PostFreeSurfer", partial(run_post_freesurfer,
                                                      path=args.output_dir,
-                                                     subject="sub-%s"%subject_label,
+                                                     subject="sub-%s" %subject_label,
                                                      grayordinatesres=grayordinatesres,
                                                      lowresmesh=lowresmesh,
                                                      n_cpus=args.n_cpus))
@@ -720,83 +720,105 @@ if args.analysis_level == "participant":
                 fmrires = float(min(zooms[:3]))
                 fmrires = "2"
 
-                #determine which fix training data to use based on resolution and TR
+                # determine which fix training data to use based on resolution and TR
 
                 if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
-                    highpass="2000"
-                    training_data="HCP_hp2000.RData"
-                    # TODO figure out how to know where the fmriVolume and fmriSurface is being outputted
-                    #input_file=
-
+                    highpass = "2000"
+                    training_data = "HCP_hp2000.RData"
 
                 func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
-                                                          path=args.output_dir,
-                                                          subject="sub-%s"%subject_label,
-                                                          fmriname=fmriname,
-                                                          fmritcs=fmritcs,
-                                                          fmriscout=fmriscout,
-                                                          SEPhaseNeg=SEPhaseNeg,
-                                                          SEPhasePos=SEPhasePos,
-                                                          echospacing=echospacing,
-                                                          unwarpdir=unwarpdir,
-                                                          fmrires=fmrires,
-                                                          dcmethod=dcmethod,
-                                                          biascorrection=biascorrection,
-                                                          n_cpus=args.n_cpus)),
+                                                                       path=args.output_dir,
+                                                                       subject="sub-%s" % (subject_label),
+                                                                       fmriname=fmriname,
+                                                                       fmritcs=fmritcs,
+                                                                       fmriscout=fmriscout,
+                                                                       SEPhaseNeg=SEPhaseNeg,
+                                                                       SEPhasePos=SEPhasePos,
+                                                                       echospacing=echospacing,
+                                                                       unwarpdir=unwarpdir,
+                                                                       fmrires=fmrires,
+                                                                       dcmethod=dcmethod,
+                                                                       biascorrection=biascorrection,
+                                                                       n_cpus=args.n_cpus)),
                                                 ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
-                                                           path=args.output_dir,
-                                                           subject="sub-%s"%subject_label,
-                                                           fmriname=fmriname,
-                                                           fmrires=fmrires,
-                                                           n_cpus=args.n_cpus,
-                                                           grayordinatesres=grayordinatesres,
-                                                           lowresmesh=lowresmesh)),
-                                                ("ICAFIX", partial(run_ICAFIX_processing,
-                                                       input_file=input_file,
-                                                       highpass=highpass,
-                                                       training_data=training_data))])
-                for stage, stage_func in func_stages_dict.iteritems():
-                    if stage in args.stages:
-                        stage_func()
+                                                                        path=args.output_dir,
+                                                                        subject="sub-%s" % (subject_label),
+                                                                        fmriname=fmriname,
+                                                                        fmrires=fmrires,
+                                                                        n_cpus=args.n_cpus,
+                                                                        grayordinatesres=grayordinatesres,
+                                                                        lowresmesh=lowresmesh))])
+                if 'rest' in fmriname:
+                    rest_stages_dict = OrderedDict([("ICAFIX", partial(run_ICAFIX_processing,
+                                                                       path=args.output_dir,
+                                                                       subject="sub-%s" % (subject_label),
+                                                                       n_cpus=args.n_cpus,
+                                                                       fmriname=fmriname,
+                                                                       high_pass=highpass,
+                                                                       training_data=training_data)),
+                                                    ("PostFix", partial(run_PostFix_processing,
+                                                                        path=args.output_dir,
+                                                                        subject="sub-%s" % (subject_label),
+                                                                        n_cpus=args.n_cpus,
+                                                                        fmriname=fmriname,
+                                                                        high_pass=highpass)),
+                                                    ("RestingStateStats", partial(run_RestingStateStats_processing,
+                                                                                  path=args.output_dir,
+                                                                                  subject="sub-%s" % (subject_label),
+                                                                                  n_cpus=args.n_cpus,
+                                                                                  fmriname=fmriname,
+                                                                                  high_pass=highpass,
+                                                                                  lowresmesh=lowresmesh,
+                                                                                  fmrires=fmrires,
+                                                                                  grayordinatesres=grayordinatesres,
+                                                                                  dlabel_file=dlabel_file))])
 
-            dwis = layout.get(subject=subject_label, type='dwi',
-                                                     extensions=["nii.gz", "nii"])
+            for stage, stage_func in func_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
+            for stage, stage_func in rest_stages_dict.iteritems():
+                if stage in args.stages:
+                    stage_func()
 
-            pos = []; neg = []
-            PEdir = None; echospacing = None
+            dwis = layout.get(subject=subject_label, type='dwi', extensions=["nii.gz", "nii"])
+
+            pos = []
+            neg = []
+            PEdir = None;
+            echospacing = None
 
             for idx, dwi in enumerate(dwis):
                 metadata = layout.get_metadata(dwi.filename)
                 # get phaseencodingdirection
                 phaseenc = metadata['PhaseEncodingDirection']
-                acq = 1 if phaseenc[0]=='i' else 2
+                acq = 1 if phaseenc[0] == 'i' else 2
                 if not PEdir:
                     PEdir = acq
                 if PEdir != acq:
-                    raise RuntimeError("Not all dwi images have the same encoding direction (both LR and AP). Not implemented.")
+                    raise RuntimeError(
+                        "Not all dwi images have the same encoding direction (both LR and AP). Not implemented.")
                 # get pos/neg
-                if len(phaseenc)>1:
+                if len(phaseenc) > 1:
                     neg.append(dwi.filename)
                 else:
                     pos.append(dwi.filename)
                 # get echospacing
                 if not echospacing:
-                    echospacing = metadata['EffectiveEchoSpacing']*1000.
-                if echospacing != metadata['EffectiveEchoSpacing']*1000.:
+                    echospacing = metadata['EffectiveEchoSpacing'] * 1000.
+                if echospacing != metadata['EffectiveEchoSpacing'] * 1000.:
                     raise RuntimeError("Not all dwi images have the same echo spacing. Not implemented.")
 
             posdata = "@".join(pos)
             negdata = "@".join(neg)
 
             dif_stages_dict = OrderedDict([("DiffusionPreprocessing", partial(run_diffusion_processsing,
-                                                     path=args.output_dir,
-                                                     subject="sub-%s"%subject_label,
-                                                     posData=posdata,
-                                                     negData=negdata,
-                                                     echospacing=echospacing,
-                                                     n_cpus=args.n_cpus,
-                                                     PEdir=PEdir))
-                           ])
+                                                                              path=args.output_dir,
+                                                                              subject="sub-%s" % (subject_label),
+                                                                              n_cpus=args.n_cpus,
+                                                                              posData=posdata,
+                                                                              negData=negdata,
+                                                                              echospacing=echospacing,
+                                                                              PEdir=PEdir))])
 
             for stage, stage_func in dif_stages_dict.iteritems():
                 if stage in args.stages:

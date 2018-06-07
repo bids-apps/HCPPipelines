@@ -157,5 +157,9 @@ COPY modified_files/run_prepareICAs.sh /opt/HCP-Pipelines/PostFix/Compiled_prepa
 COPY modified_files/RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/RestingStateStats.sh
 COPY modified_files/run_RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/Compiled_RestingStateStats/distrib/run_RestingStateStats.sh
 
+#make /bids_dir and /output_dir
+RUN mkdir /bids_dir && \
+    mkdir /output_dir
+
 
 ENTRYPOINT ["/run.py"]
