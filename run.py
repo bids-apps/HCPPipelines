@@ -39,6 +39,7 @@ def run(command, env={}, cwd=None):
 grayordinatesres = "2" # This is currently the only option for which the is an atlas
 lowresmesh = 32
 dlabel_file = "/360CortSurf_19Vol_parcel.dlabel.nii"
+parcellation= "Glasser"
 
 def run_pre_freesurfer(**args):
     args.update(os.environ)
@@ -177,7 +178,26 @@ def run_diffusion_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
-def run_taskfMRI_processing(**args)
+def run_TaskfMRI_processing(**args):
+    args.update(os.environ)
+    cmd = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh ' + \
+        '--path="{path}" ' + \
+        '--subject="{subject}" ' + \
+        '--lvl1tasks="{level_1_tasks}" ' + \
+        '--lvl1fsfs="{level_1_fsfs}" ' + \
+        '--lvl2task="{level_2_task}" ' + \
+        '--lvl2fsf="{level_2_fsf}" ' + \
+        '--lowresmesh="{lowresmesh:d}" ' + \
+        '--grayordinatesres="{grayordinatesres:s}" ' + \
+        '--origsmoothingFWHM="{fmrires:s}" ' + \
+        '--confound="{confound} ' + \
+        '--finalsmoothingFWHM="{fmrires:s}" ' + \
+        '--temporalfilter="{temporal_filter}" ' + \
+        '--vba="{vba}" ' + \
+        '--regname="FS"' + \
+        '--parcellation="{parcellation}" ' + \
+        '--parcellationfile={parcellation_file} '
+
 
 def run_ICAFIX_processing(**args):
     args.update(os.environ)
@@ -188,6 +208,7 @@ def run_ICAFIX_processing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
                                     "XAPPLRESDIR": "/usr/local/R2014a/v83/X11/app-defaults"})
+
 
 def run_PostFix_processing(**args):
     args.update(os.environ)
@@ -202,6 +223,7 @@ def run_PostFix_processing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
                                     "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
                                     "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
+
 
 def run_RestingStateStats_processing(**args):
     args.update(os.environ)
@@ -457,12 +479,6 @@ if args.analysis_level == "participant":
                     reptime = float("%.1f" % zooms[3])
                     fmrires = "2"
 
-                    # determine which fix training data to use based on resolution and TR
-
-                    if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
-                        highpass = "2000"
-                        training_data = "HCP_hp2000.RData"
-
                     func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                                            path=args.output_dir + "/sub-%s" % (subject_label),
                                                                            subject="ses-%s" % (ses_label),
@@ -486,6 +502,12 @@ if args.analysis_level == "participant":
                                                                             grayordinatesres=grayordinatesres,
                                                                             lowresmesh=lowresmesh))])
                     if 'rest' in fmriname:
+                        # determine which fix training data to use based on resolution and TR
+
+                        if zooms[:3] == (2.0, 2.0, 2.0) and (reptime == 0.8 or reptime == 0.7 or reptime == 1.0):
+                            highpass = "2000"
+                            training_data = "HCP_hp2000.RData"
+
                         rest_stages_dict = OrderedDict([("ICAFIX", partial(run_ICAFIX_processing,
                                                                            path=args.output_dir + "/sub-%s" % (subject_label),
                                                                            n_cpus=args.n_cpus,
@@ -510,12 +532,20 @@ if args.analysis_level == "participant":
                                                                                      grayordinatesres=grayordinatesres,
                                                                                      dlabel_file=dlabel_file))])
                     else:
-                        task_stages_dict = OrderedDict([("TaskfMRIAnalysis", partial(run_taskfMRI_processing,
+                        highpass=200
+                        # TODO: Finish this portion
+                        task_stages_dict = OrderedDict([("TaskfMRIAnalysis", partial(run_TaskfMRI_processing,
                                                                                      path=args.output_dir + "/sub-%s" % (
                                                                                      subject_label),
                                                                                      n_cpus=args.n_cpus,
                                                                                      subject="ses-%s" % (ses_label),
-                                                                                     fmriname=fmriname,
+                                                                                     lowresmesh=lowresmesh,
+                                                                                     fmrires=fmrires,
+                                                                                     grayordinatesres=grayordinatesres,
+                                                                                     parcellation_file=dlabel_file,
+                                                                                     parcellation=parcellation,
+                                                                                     temporal_filter=highpass,
+
                                                                                      ))])
 
                 for stage, stage_func in func_stages_dict.iteritems():
