@@ -176,6 +176,9 @@ def run_diffusion_processsing(**args):
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
+
+def run_taskfMRI_processing(**args)
+
 def run_ICAFIX_processing(**args):
     args.update(os.environ)
     cmd = '{FSL_FIXDIR}/hcp_fix ' + \
@@ -506,6 +509,14 @@ if args.analysis_level == "participant":
                                                                                      fmrires=fmrires,
                                                                                      grayordinatesres=grayordinatesres,
                                                                                      dlabel_file=dlabel_file))])
+                    else:
+                        task_stages_dict = OrderedDict([("TaskfMRIAnalysis", partial(run_taskfMRI_processing,
+                                                                                     path=args.output_dir + "/sub-%s" % (
+                                                                                     subject_label),
+                                                                                     n_cpus=args.n_cpus,
+                                                                                     subject="ses-%s" % (ses_label),
+                                                                                     fmriname=fmriname,
+                                                                                     ))])
 
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
