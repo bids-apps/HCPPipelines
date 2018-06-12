@@ -178,6 +178,17 @@ def run_diffusion_processsing(**args):
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
+def run_Generatefsf_processing(**args):
+    cmd = '{HCPPIPEDIR}/Examples/Scripts/generate_level1_fsf.sh ' + \
+        '--studyfolder="{path}" ' + \
+        '--subject="{subject}" ' + \
+        '--taskname="{fmriname}" ' + \
+        '--templatedir= ' + \
+        '--outdir= '
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+
+
 def run_TaskfMRI_processing(**args):
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh ' + \
@@ -197,7 +208,8 @@ def run_TaskfMRI_processing(**args):
         '--regname="FS"' + \
         '--parcellation="{parcellation}" ' + \
         '--parcellationfile={parcellation_file} '
-
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_ICAFIX_processing(**args):
     args.update(os.environ)
@@ -534,7 +546,14 @@ if args.analysis_level == "participant":
                     else:
                         highpass=200
                         # TODO: Finish this portion
-                        task_stages_dict = OrderedDict([("TaskfMRIAnalysis", partial(run_TaskfMRI_processing,
+                        task_stages_dict = OrderedDict([("Generatefsf", partial(run_Generatefsf_processing,
+                                                                                path=args.output_dir + "/sub-%s" % (
+                                                                                    subject_label),
+                                                                                n_cpus=args.n_cpus,
+                                                                                subject="ses-%s" % (ses_label),
+                                                                                fmriname=fmriname,
+                                                                                )),
+                                                        ("TaskfMRIAnalysis", partial(run_TaskfMRI_processing,
                                                                                      path=args.output_dir + "/sub-%s" % (
                                                                                      subject_label),
                                                                                      n_cpus=args.n_cpus,
@@ -545,7 +564,6 @@ if args.analysis_level == "participant":
                                                                                      parcellation_file=dlabel_file,
                                                                                      parcellation=parcellation,
                                                                                      temporal_filter=highpass,
-
                                                                                      ))])
 
                 for stage, stage_func in func_stages_dict.iteritems():
