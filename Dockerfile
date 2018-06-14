@@ -144,6 +144,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends python-pip pyth
 RUN pip install pybids==0.5.1
 RUN pip install --upgrade pybids
 
+
+#make /bids_dir and /output_dir
+RUN mkdir /bids_dir && \
+    mkdir /output_dir
+
 COPY run.py /run.py
 RUN chmod 555 /run.py
 
@@ -151,15 +156,11 @@ COPY version /version
 COPY IntendedFor.py /IntendedFor.py
 COPY modified_files/fsl_sub /usr/lib/fsl/5.0/fsl_sub
 COPY modified_files/settings.sh /opt/fix/settings.sh
-COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii
+COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /output_dir/360CortSurf_19Vol_parcel.dlabel.nii
 COPY modified_files/PostFix.sh /opt/HCP-Pipelines/PostFix/PostFix.sh
 COPY modified_files/run_prepareICAs.sh /opt/HCP-Pipelines/PostFix/Compiled_prepareICAs/distrib/run_prepareICAs.sh
 COPY modified_files/RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/RestingStateStats.sh
 COPY modified_files/run_RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/Compiled_RestingStateStats/distrib/run_RestingStateStats.sh
-
-#make /bids_dir and /output_dir
-RUN mkdir /bids_dir && \
-    mkdir /output_dir
 
 
 ENTRYPOINT ["/run.py"]

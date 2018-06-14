@@ -38,7 +38,7 @@ def run(command, env={}, cwd=None):
 
 grayordinatesres = "2" # This is currently the only option for which the is an atlas
 lowresmesh = 32
-dlabel_file = "/360CortSurf_19Vol_parcel.dlabel.nii"
+dlabel_file = "/output_dir/360CortSurf_19Vol_parcel.dlabel.nii"
 parcellation= "Glasser"
 
 def run_pre_freesurfer(**args):
@@ -257,9 +257,7 @@ def run_RestingStateStats_processing(**args):
     '--wm="NONE" ' + \
     '--csf="NONE"'
     cmd = cmd.format(**args)
-    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"]),
-                                "XAPPLRESDIR": "/usr/local/R2013a/v81/X11/app-defaults",
-                                "matlab_compiler_runtime": "/usr/local/R2013a/v81"})
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 
 
@@ -566,12 +564,13 @@ if args.analysis_level == "participant":
                                                                                      temporal_filter=highpass,
                                                                                      ))])
 
-                for stage, stage_func in func_stages_dict.iteritems():
-                    if stage in args.stages:
-                        stage_func()
-                for stage, stage_func in rest_stages_dict.iteritems():
-                    if stage in args.stages:
-                        stage_func()
+                    for stage, stage_func in func_stages_dict.iteritems():
+                        if stage in args.stages:
+                            stage_func()
+                    if 'rest' in fmriname:
+		                for stage, stage_func in rest_stages_dict.iteritems():
+		                    if stage in args.stages:
+		                        stage_func()
 
 
                 dwis = layout.get(subject=subject_label, type='dwi', extensions=["nii.gz", "nii"])
@@ -831,12 +830,13 @@ if args.analysis_level == "participant":
                                                                                   grayordinatesres=grayordinatesres,
                                                                                   dlabel_file=dlabel_file))])
 
-            for stage, stage_func in func_stages_dict.iteritems():
-                if stage in args.stages:
-                    stage_func()
-            for stage, stage_func in rest_stages_dict.iteritems():
-                if stage in args.stages:
-                    stage_func()
+                for stage, stage_func in func_stages_dict.iteritems():
+                    if stage in args.stages:
+                        stage_func()
+                if 'rest' in fmriname:
+                    for stage, stage_func in rest_stages_dict.iteritems():
+                        if stage in args.stages:
+                            stage_func()
 
             dwis = layout.get(subject=subject_label, type='dwi', extensions=["nii.gz", "nii"])
 
