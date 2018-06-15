@@ -36,10 +36,6 @@ def run(command, env={}, cwd=None):
     #change_owner ='chown -R `stat -c "%u:%g" ' + args.output_dir + '` ' + args.output_dir
     #os.system(change_owner)
 
-grayordinatesres = "2" # This is currently the only option for which the is an atlas
-lowresmesh = 32
-dlabel_file = "/output_dir/360CortSurf_19Vol_parcel.dlabel.nii"
-parcellation= "Glasser"
 
 def run_pre_freesurfer(**args):
     args.update(os.environ)
@@ -296,7 +292,12 @@ parser.add_argument('-v', '--version', action='version',
 
 args = parser.parse_args()
 
-
+grayordinatesres = "2" # This is currently the only option for which the is an atlas
+lowresmesh = 32
+dlabel_file = "/360CortSurf_19Vol_parcel.dlabel.nii"
+parcellation= "Glasser"
+os.system("cp /360CortSurf_19Vol_parcel.dlabel.nii /output_dir/360CortSurf_19Vol_parcel.dlabel.nii")
+dlabel_file = "/output_dir/360CortSurf_19Vol_parcel.dlabel.nii"
 
 
 run("bids-validator " + args.bids_dir)

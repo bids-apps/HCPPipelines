@@ -147,7 +147,11 @@ RUN pip install --upgrade pybids
 
 #make /bids_dir and /output_dir
 RUN mkdir /bids_dir && \
-    mkdir /output_dir
+    mkdir /output_dir 
+    
+#create 360CortSurf_19Vol_parcel.dlabel.nii
+RUN cd / && \
+	wget https://github.umn.edu/hendr522/HCPPipelines/blob/master/modified_files/360CortSurf_19Vol_parcel.dlabel.nii
 
 COPY run.py /run.py
 RUN chmod 555 /run.py
@@ -156,7 +160,7 @@ COPY version /version
 COPY IntendedFor.py /IntendedFor.py
 COPY modified_files/fsl_sub /usr/lib/fsl/5.0/fsl_sub
 COPY modified_files/settings.sh /opt/fix/settings.sh
-COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /output_dir/360CortSurf_19Vol_parcel.dlabel.nii
+COPY modified_files/360CortSurf_19Vol_parcel.dlabel.nii /360CortSurf_19Vol_parcel.dlabel.nii
 COPY modified_files/PostFix.sh /opt/HCP-Pipelines/PostFix/PostFix.sh
 COPY modified_files/run_prepareICAs.sh /opt/HCP-Pipelines/PostFix/Compiled_prepareICAs/distrib/run_prepareICAs.sh
 COPY modified_files/RestingStateStats.sh /opt/HCP-Pipelines/RestingStateStats/RestingStateStats.sh
