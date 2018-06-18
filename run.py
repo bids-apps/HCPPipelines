@@ -179,31 +179,31 @@ def run_Generatefsf_processing(**args):
         '--studyfolder="{path}" ' + \
         '--subject="{subject}" ' + \
         '--taskname="{fmriname}" ' + \
-        '--templatedir= ' + \
-        '--outdir= '
+        '--templatedir="{path}/template_fsf_files" ' + \
+        '--outdir="{path}/{subject}/MNINonLinear/Results/{fmriname}" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
-
+# TODO: think about how to incorporate level2 analysis (i.e. combining opposite phase encoding direction).
 def run_TaskfMRI_processing(**args):
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh ' + \
         '--path="{path}" ' + \
         '--subject="{subject}" ' + \
-        '--lvl1tasks="{level_1_tasks}" ' + \
-        '--lvl1fsfs="{level_1_fsfs}" ' + \
+        '--lvl1tasks="{fmriname}" ' + \
+        '--lvl1fsfs="{fmriname}" ' + \
         '--lvl2task="{level_2_task}" ' + \
         '--lvl2fsf="{level_2_fsf}" ' + \
         '--lowresmesh="{lowresmesh:d}" ' + \
         '--grayordinatesres="{grayordinatesres:s}" ' + \
         '--origsmoothingFWHM="{fmrires:s}" ' + \
-        '--confound="{confound} ' + \
+        '--confound="NONE" ' + \
         '--finalsmoothingFWHM="{fmrires:s}" ' + \
         '--temporalfilter="{temporal_filter}" ' + \
-        '--vba="{vba}" ' + \
-        '--regname="FS"' + \
+        '--vba="NO" ' + \
+        '--regname="FS" ' + \
         '--parcellation="{parcellation}" ' + \
-        '--parcellationfile={parcellation_file} '
+        '--parcellationfile="{parcellation_file}"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -281,7 +281,8 @@ parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
-                                       'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats', 'DiffusionPreprocessing'],
+                                       'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats', 'DiffusionPreprocessing',
+                                       'TaskfMRIAnalysis', 'Generatefsf'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats',
                             'DiffusionPreprocessing'])
@@ -559,19 +560,24 @@ if args.analysis_level == "participant":
                                                                                      subject="ses-%s" % (ses_label),
                                                                                      lowresmesh=lowresmesh,
                                                                                      fmrires=fmrires,
+                                                                                     fmriname=fmriname,
                                                                                      grayordinatesres=grayordinatesres,
                                                                                      parcellation_file=dlabel_file,
                                                                                      parcellation=parcellation,
-                                                                                     temporal_filter=highpass,
+                                                                                     temporal_filter=highpass
                                                                                      ))])
 
                     for stage, stage_func in func_stages_dict.iteritems():
                         if stage in args.stages:
                             stage_func()
                     if 'rest' in fmriname:
-		                for stage, stage_func in rest_stages_dict.iteritems():
-		                    if stage in args.stages:
-		                        stage_func()
+                        for stage, stage_func in rest_stages_dict.iteritems():
+                            if stage in args.stages:
+                                stage_func()
+                    else:
+                        for stage, stage_func in task_stages_dict.iteritems():
+                            if stage in args.stages:
+                                stage_func()
 
 
                 dwis = layout.get(subject=subject_label, type='dwi', extensions=["nii.gz", "nii"])
