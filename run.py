@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/local/miniconda/bin/python
+
 from __future__ import print_function
 import argparse
 import os
@@ -62,7 +63,7 @@ def run_pre_freesurfer(**args):
     '--t1samplespacing="{t1samplespacing}" ' + \
     '--t2samplespacing="{t2samplespacing}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
-    '--gdcoeffs="NONE" ' + \
+    '--gdcoeffs={gdcoeffs} ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
     '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
     '--printcom=""'
@@ -130,7 +131,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--unwarpdir={unwarpdir} ' + \
       '--fmrires={fmrires:s} ' + \
       '--dcmethod={dcmethod} ' + \
-      '--gdcoeffs="NONE" ' + \
+      '--gdcoeffs={gdcoeffs} ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
       '--printcom="" ' + \
       '--biascorrection={biascorrection} ' + \
@@ -161,7 +162,7 @@ def run_diffusion_processsing(**args):
       '--subject="{subject}" ' + \
       '--echospacing="{echospacing}" '+ \
       '--PEdir={PEdir} ' + \
-      '--gdcoeffs="NONE" ' + \
+      '--gdcoeffs={gdcoeffs} ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -196,6 +197,8 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                             'DiffusionPreprocessing'])
 parser.add_argument('--coreg', help='Coregistration method to use',
                     choices=['MSMSulc', 'FS'], default='MSMSulc')
+parser.add_argument('--gdcoeffs', help='Gradients coefficients file',
+                    default="NONE")
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -325,6 +328,7 @@ if args.analysis_level == "participant":
                                                 n_cpus=args.n_cpus,
                                                 t1_template_res=t1_template_res,
                                                 t2_template_res=t2_template_res,
+                                                gdcoeffs=args.gdcoeffs,
                                                 **fmap_args)),
                        ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,
@@ -398,7 +402,8 @@ if args.analysis_level == "participant":
                                                       fmrires=fmrires,
                                                       dcmethod=dcmethod,
                                                       biascorrection=biascorrection,
-                                                      n_cpus=args.n_cpus)),
+                                                      n_cpus=args.n_cpus,
+                                                      gdcoeffs=args.gdcoeffs)),
                                 ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
                                                        path=args.output_dir,
                                                        subject="sub-%s"%subject_label,
