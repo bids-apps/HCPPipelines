@@ -42,22 +42,22 @@ def IntendedFor(data_path):
 				else:
 					func_nii = "/".join(func_nii.split("/")[-2:])
 					func_list.append(func_nii)
-			elif patient_pos_fmap == patient_pos_func:
-				shim_func_np = numpy.array(shim_func)
-				shim_fmap_np = numpy.array(shim_fmap)
-				diff_shims = shim_fmap_np - shim_func_np
-				print("difference between fieldmap and functional scan is " + str(sum(abs(diff_shims))))
-				user_input = raw_input("Do you accept this difference? [y/n]: ")
-				if user_input == 'y':
-					func_nii = glob(data_path + '/func/' + func.split('/')[-1].split('.')[0] + ".nii*")[0]
-					if "ses" in data_path:
-						func_nii = "/".join(func_nii.split("/")[-3:])
-						func_list.append(func_nii)
-					else:
-						func_nii = "/".join(func_nii.split("/")[-2:])
-						func_list.append(func_nii)
-				else:
-					print(fmap + " does not have match yet...")
+			#elif patient_pos_fmap == patient_pos_func:
+			#	shim_func_np = numpy.array(shim_func)
+			#	shim_fmap_np = numpy.array(shim_fmap)
+			#	diff_shims = shim_fmap_np - shim_func_np
+			#	print("difference between fieldmap and functional scan is " + str(sum(abs(diff_shims))))
+			#	user_input = raw_input("Do you accept this difference? [y/n]: ")
+			#	if user_input == 'y':
+			#		func_nii = glob(data_path + '/func/' + func.split('/')[-1].split('.')[0] + ".nii*")[0]
+			#		if "ses" in data_path:
+			#			func_nii = "/".join(func_nii.split("/")[-3:])
+			#			func_list.append(func_nii)
+			#		else:
+			#			func_nii = "/".join(func_nii.split("/")[-2:])
+			#			func_list.append(func_nii)
+			#	else:
+			#		print(fmap + " does not have match yet...")
 		entry = {"IntendedFor": func_list}
 
 		fmap_json.update(entry)
