@@ -114,7 +114,7 @@ def run_post_freesurfer(**args):
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
-      '--regname="FS" ' + \
+      '--regname="{regname}" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -155,7 +155,7 @@ def run_generic_fMRI_surface_processsing(**args):
       '--fmrires={fmrires:s} ' + \
       '--smoothingFWHM={fmrires:s} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
-      '--regname="FS"'
+      '--regname="{regname}"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -286,6 +286,8 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface', 'ICAFIX', 'PostFix', 'RestingStateStats',
                             'DiffusionPreprocessing'])
+parser.add_argument('--coreg', help='Coregistration method to use',
+                    choices=['MSMSulc', 'FS'], default='MSMSulc')
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     default='CUSSPUD/4LAA')
 parser.add_argument('-v', '--version', action='version',
@@ -303,7 +305,7 @@ dlabel_file = "/output_dir/360CortSurf_19Vol_parcel.dlabel.nii"
 
 run("bids-validator " + args.bids_dir)
 
-layout = BIDSLayout(args.bids_dir)
+layout = BIDSLayout(args.bids_dir, exclude=['derivatives'])
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
@@ -573,7 +575,7 @@ if args.analysis_level == "participant":
                     if 'rest' in fmriname:
                         for stage, stage_func in rest_stages_dict.iteritems():
                             if stage in args.stages:
-                                stage_func()
+                                stage_func()                        
                     else:
                         for stage, stage_func in task_stages_dict.iteritems():
                             if stage in args.stages:
@@ -836,12 +838,39 @@ if args.analysis_level == "participant":
                                                                                   fmrires=fmrires,
                                                                                   grayordinatesres=grayordinatesres,
                                                                                   dlabel_file=dlabel_file))])
+                else:
+                        highpass=200
+                        # TODO: Finish this portion
+                        task_stages_dict = OrderedDict([("Generatefsf", partial(run_Generatefsf_processing,
+                                                                                path=args.output_dir + "/sub-%s" % (
+                                                                                    subject_label),
+                                                                                n_cpus=args.n_cpus,
+                                                                                subject="ses-%s" % (ses_label),
+                                                                                fmriname=fmriname,
+                                                                                )),
+                                                        ("TaskfMRIAnalysis", partial(run_TaskfMRI_processing,
+                                                                                     path=args.output_dir + "/sub-%s" % (
+                                                                                     subject_label),
+                                                                                     n_cpus=args.n_cpus,
+                                                                                     subject="ses-%s" % (ses_label),
+                                                                                     lowresmesh=lowresmesh,
+                                                                                     fmrires=fmrires,
+                                                                                     fmriname=fmriname,
+                                                                                     grayordinatesres=grayordinatesres,
+                                                                                     parcellation_file=dlabel_file,
+                                                                                     parcellation=parcellation,
+                                                                                     temporal_filter=highpass
+                                                                                     ))])
 
                 for stage, stage_func in func_stages_dict.iteritems():
                     if stage in args.stages:
                         stage_func()
                 if 'rest' in fmriname:
                     for stage, stage_func in rest_stages_dict.iteritems():
+                        if stage in args.stages:
+                            stage_func()
+                else:
+                    for stage, stage_func in task_stages_dict.iteritems():
                         if stage in args.stages:
                             stage_func()
 
