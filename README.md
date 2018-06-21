@@ -76,6 +76,23 @@ To run it in participant level mode (for one participant):
     -v /Users/filo/outputs:/outputs \
     bids/hcppipelines \
     /bids_dataset /outputs participant --participant_label 01 --license_key "XXXXXX"
+    
+### Docker to Singularity Image Conversion
+
+To convert docker image to singularity you will need:
+1) A system with docker 
+2) The docker image on that system (i.e. 'docker pull name/of/docker/image')
+3) The docker image docker2singularity on that system ('docker pull docker2singularity')
+
+And the command: 
+```
+  docker run --privileged -ti --rm  \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v /path/to/singularity/images/directory:/output \
+      singularityware/docker2singularity \
+      name/of/docker/image
+```
+
 
 ### Commercial use
 
