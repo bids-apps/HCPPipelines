@@ -82,7 +82,7 @@ RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_6
     conda config --add channels conda-forge && \
     conda install -y mkl mkl-service numpy nibabel && sync && \
     conda clean -tipsy && sync && \
-    pip install --no-cache-dir pybids==0.5.1
+    pip install --no-cache-dir pybids==0.6.3
 
 # Install connectome-workbench
 WORKDIR /opt
