@@ -140,7 +140,7 @@ RUN apt-get update && \
 RUN npm install -g bids-validator@0.26.11
 
 RUN apt-get update && apt-get install -y --no-install-recommends python-pip python-six python-nibabel python-setuptools
-RUN pip install pybids==0.5.1
+RUN pip install grabbit==0.1.2 pybids==0.5.1
 ENV PYTHONPATH=""
 
 COPY run.py /run.py
