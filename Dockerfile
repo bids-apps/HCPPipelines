@@ -80,7 +80,7 @@ RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_6
     bash Miniconda2-4.5.4-Linux-x86_64.sh -b -p /usr/local/miniconda && \
     rm Miniconda2-4.5.4-Linux-x86_64.sh && \
     conda config --add channels conda-forge && \
-    conda install -y mkl mkl-service numpy nibabel && sync && \
+    conda install -y mkl mkl-service numpy nibabel pandas && sync && \
     conda clean -tipsy && sync && \
     pip install --no-cache-dir pybids==0.6.3
 
