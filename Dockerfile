@@ -66,7 +66,7 @@ WORKDIR /opt
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends python-numpy && \
     wget -q https://github.com/Washington-University/Pipelines/archive/v3.17.0.tar.gz -O pipelines.tar.gz && \
-    tar zxf pipelines.tar.gz -C \opt && \
+    tar zxf pipelines.tar.gz -C /opt && \
     mv /opt/Pipelines-* /opt/HCP-Pipelines && \
     rm pipelines.tar.gz && \
     wget -q https://www.doc.ic.ac.uk/~ecr05/MSM_HOCR_v1/MSM_HOCR_v1-download.tgz -O MSMs.tar.gz && \
