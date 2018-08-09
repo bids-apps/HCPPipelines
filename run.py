@@ -22,7 +22,7 @@ def run(command, env={}, cwd=None):
                     shell=True, env=merged_env, cwd=cwd)
     while True:
         line = process.stdout.readline()
-        print(line)
+        print(line,end='')
         line = str(line)[:-1]
         if line == '' and process.poll() != None:
             break
