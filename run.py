@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/local/miniconda/bin/python
+
 from __future__ import print_function
 import argparse
 import os
@@ -62,7 +63,7 @@ def run_pre_freesurfer(**args):
     '--t1samplespacing="{t1samplespacing}" ' + \
     '--t2samplespacing="{t2samplespacing}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
-    '--gdcoeffs="NONE" ' + \
+    '--gdcoeffs={gdcoeffs} ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
     '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
     '--printcom=""'
@@ -107,7 +108,7 @@ def run_post_freesurfer(**args):
       '--subcortgraylabels="{HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt" ' + \
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
-      '--regname="FS" ' + \
+      '--regname="{regname}" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -130,7 +131,7 @@ def run_generic_fMRI_volume_processsing(**args):
       '--unwarpdir={unwarpdir} ' + \
       '--fmrires={fmrires:s} ' + \
       '--dcmethod={dcmethod} ' + \
-      '--gdcoeffs="NONE" ' + \
+      '--gdcoeffs={gdcoeffs} ' + \
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
       '--printcom="" ' + \
       '--biascorrection={biascorrection} ' + \
@@ -148,7 +149,7 @@ def run_generic_fMRI_surface_processsing(**args):
       '--fmrires={fmrires:s} ' + \
       '--smoothingFWHM={fmrires:s} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
-      '--regname="FS"'
+      '--regname="{regname}"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -161,14 +162,14 @@ def run_diffusion_processsing(**args):
       '--subject="{subject}" ' + \
       '--echospacing="{echospacing}" '+ \
       '--PEdir={PEdir} ' + \
-      '--gdcoeffs="NONE" ' + \
+      '--gdcoeffs={gdcoeffs} ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='HCP Pipeliens BIDS App (T1w, T2w, fMRI)')
+parser = argparse.ArgumentParser(description='HCP Pipelines BIDS App (T1w, T2w, fMRI)')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
@@ -194,6 +195,10 @@ parser.add_argument('--stages', help='Which stages to run. Space separated list.
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
                             'fMRIVolume', 'fMRISurface',
                             'DiffusionPreprocessing'])
+parser.add_argument('--coreg', help='Coregistration method to use',
+                    choices=['MSMSulc', 'FS'], default='MSMSulc')
+parser.add_argument('--gdcoeffs', help='Gradients coefficients file',
+                    default="NONE")
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
@@ -205,7 +210,7 @@ args = parser.parse_args()
 
 run("bids-validator " + args.bids_dir)
 
-layout = BIDSLayout(args.bids_dir)
+layout = BIDSLayout(args.bids_dir, exclude=['derivatives'])
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
@@ -323,6 +328,7 @@ if args.analysis_level == "participant":
                                                 n_cpus=args.n_cpus,
                                                 t1_template_res=t1_template_res,
                                                 t2_template_res=t2_template_res,
+                                                gdcoeffs=args.gdcoeffs,
                                                 **fmap_args)),
                        ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,
@@ -333,7 +339,8 @@ if args.analysis_level == "participant":
                                                  subject="sub-%s"%subject_label,
                                                  grayordinatesres=grayordinatesres,
                                                  lowresmesh=lowresmesh,
-                                                 n_cpus=args.n_cpus))
+                                                 n_cpus=args.n_cpus,
+                                                 regname=args.coreg))
                        ])
         for stage, stage_func in struct_stages_dict.iteritems():
             if stage in args.stages:
@@ -350,16 +357,16 @@ if args.analysis_level == "participant":
             if not os.path.exists(fmriscout):
                 fmriscout = "NONE"
 
-            fieldmap_set = layout.get_fieldmap(fmritcs)
-            if fieldmap_set and fieldmap_set["type"] == "epi":
+            fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
+            if fieldmap_set and len(fieldmap_set) == 2 and all(item["type"] == "epi" for item in fieldmap_set):
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for fieldmap in fieldmap_set["epi"]:
-                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
+                for fieldmap in fieldmap_set:
+                    enc_dir = layout.get_metadata(fieldmap["epi"])["PhaseEncodingDirection"]
                     if "-" in enc_dir:
-                        SEPhaseNeg = fieldmap
+                        SEPhaseNeg = fieldmap['epi']
                     else:
-                        SEPhasePos = fieldmap
+                        SEPhasePos = fieldmap['epi']
                 echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
                 unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
                 unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
@@ -395,7 +402,8 @@ if args.analysis_level == "participant":
                                                       fmrires=fmrires,
                                                       dcmethod=dcmethod,
                                                       biascorrection=biascorrection,
-                                                      n_cpus=args.n_cpus)),
+                                                      n_cpus=args.n_cpus,
+                                                      gdcoeffs=args.gdcoeffs)),
                                 ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
                                                        path=args.output_dir,
                                                        subject="sub-%s"%subject_label,
@@ -403,7 +411,8 @@ if args.analysis_level == "participant":
                                                        fmrires=fmrires,
                                                        n_cpus=args.n_cpus,
                                                        grayordinatesres=grayordinatesres,
-                                                       lowresmesh=lowresmesh))
+                                                       lowresmesh=lowresmesh,
+                                                       regname=args.coreg))
                                 ])
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
