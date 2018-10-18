@@ -168,7 +168,9 @@ RUN chmod +x /run.py
 # bash prompt
 RUN cat /etc/bash.bashrc | sed -e "s/PS1=.*/PS1='\${debian_chroot:+(\$debian_chroot)}\\\u@\\\h \\\[\\\e[1;36m\\\](BIDS_HCP_BIRC)\\\[\\\e[m\\\] \\\w\\\\$ '/" > /tmp/tmp.bashrc && \
 mv /tmp/tmp.bashrc /etc/bash.bashrc
+
 # Directories
+RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
 ## binds
 RUN mkdir -p /bind/data_in && \
   mkdir -p /bind/data_out && \
@@ -181,10 +183,10 @@ RUN /usr/bin/env \
 | sed  '/^HOME/d' \
 | sed '/^HOSTNAME/d' \
 | sed  '/^USER/d' \
-| sed '/^PWD/d' > /environment && \
+| sed '/^PWD/d' >> /environment && \
 chmod 755 /environment
 
 COPY entry_init.sh /singularity
 RUN chmod 755 /singularity
 
-ENTRYPOINT ["/singularity", "/usr/bin/env"]
+ENTRYPOINT ["/singularity"]
