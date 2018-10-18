@@ -165,6 +165,9 @@ RUN chmod +x /run.py
 
 # Customization for UConn BIRC
 
+# bash prompt
+RUN cat /etc/bash.bashrc | sed -e "s/PS1=.*/PS1='\${debian_chroot:+(\$debian_chroot)}\\\u@\\\h \\\[\\\e[1;36m\\\](BIDS_HCP_BIRC)\\\[\\\e[m\\\] \\\w\\\\$ '/" > /tmp/tmp.bashrc && \
+mv /tmp/tmp.bashrc /etc/bash.bashrc
 # Directories
 ## binds
 RUN mkdir -p /bind/data_in && \
