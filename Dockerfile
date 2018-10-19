@@ -190,3 +190,4 @@ COPY entry_init.sh /singularity
 RUN chmod 755 /singularity
 
 ENTRYPOINT ["/singularity"]
+CMD ["/bin/bash"]
