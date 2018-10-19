@@ -163,4 +163,31 @@ RUN pip install https://github.com/Washington-University/gradunwarp/archive/v1.0
 COPY run.py version /
 RUN chmod +x /run.py
 
-ENTRYPOINT ["/run.py"]
+# Customization for UConn BIRC
+
+# bash prompt
+RUN cat /etc/bash.bashrc | sed -e "s/PS1=.*/PS1='\${debian_chroot:+(\$debian_chroot)}\\\u@\\\h \\\[\\\e[1;36m\\\](BIDS_HCP_BIRC)\\\[\\\e[m\\\] \\\w\\\\$ '/" > /tmp/tmp.bashrc && \
+mv /tmp/tmp.bashrc /etc/bash.bashrc
+
+# Directories
+RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
+## binds
+RUN mkdir -p /bind/data_in && \
+  mkdir -p /bind/data_out && \
+  mkdir -p /bind/scripts
+## PREpend user scripts to the path
+ENV PATH /bind/scripts:$PATH
+
+# setup singularity compatible entry points to run the initialization script
+RUN /usr/bin/env \
+| sed  '/^HOME/d' \
+| sed '/^HOSTNAME/d' \
+| sed  '/^USER/d' \
+| sed '/^PWD/d' >> /environment && \
+chmod 755 /environment
+
+COPY entry_init.sh /singularity
+RUN chmod 755 /singularity
+
+ENTRYPOINT ["/singularity"]
+CMD ["/bin/bash"]
