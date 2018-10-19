@@ -68,7 +68,6 @@ def run_pre_freesurfer(**args):
     '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
-    print(cmd)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_freesurfer(**args):
@@ -204,7 +203,6 @@ parser.add_argument('--license_key', help='FreeSurfer license key - letters and 
                     required=True)
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pielines BIDS App version {}'.format(__version__))
-parser.add_argument('--anatunwarpdir', help='Unwarp direction for T1w and T2w volumes')
 
 args = parser.parse_args()
 
@@ -243,7 +241,7 @@ if args.analysis_level == "participant":
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
-        fieldmap_set = layout.get_fieldmap(t1ws[0], return_list=True)
+        fieldmap_set = layout.get_fieldmap(t1ws[0])
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
                      "echodiff": "NONE",
@@ -257,22 +255,19 @@ if args.analysis_level == "participant":
                      "seunwarpdir": "NONE"}
 
         if fieldmap_set:
-            t1_spacing = layout.get_metadata(t1ws[0])["DwellTime"]
-            t2_spacing = layout.get_metadata(t2ws[0])["DwellTime"]
+            t1_spacing = layout.get_metadata(t1ws[0])["EffectiveEchoSpacing"]
+            t2_spacing = layout.get_metadata(t2ws[0])["EffectiveEchoSpacing"]
 
-            # unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
-            # unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
-            #if len(unwarpdir) == 2:
-            #    unwarpdir = unwarpdir[0]+"-"
-            #
-
-            unwarpdir = 'z'
+            unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
+            unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
+            if len(unwarpdir) == 2:
+                unwarpdir = unwarpdir[0]+"-"
 
             fmap_args.update({"t1samplespacing": "%.8f"%t1_spacing,
                               "t2samplespacing": "%.8f"%t2_spacing,
                               "unwarpdir": unwarpdir})
 
-            if fieldmap_set[0]["type"] == "phasediff":
+            if fieldmap_set["type"] == "phasediff":
                 merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
                 run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
                 subject_label,
@@ -289,22 +284,22 @@ if args.analysis_level == "participant":
                                   "fmapphase": fieldmap_set["phasediff"],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif fieldmap_set[0]["type"] == "epi":
+            elif fieldmap_set["type"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
-                for fieldmap in fieldmap_set:
-                    enc_dir = layout.get_metadata(fieldmap['epi'])["PhaseEncodingDirection"]
+                for fieldmap in fieldmap_set["epi"]:
+                    enc_dir = layout.get_metadata(fieldmap)["PhaseEncodingDirection"]
                     if "-" in enc_dir:
-                        SEPhaseNeg = fieldmap['epi']
+                        SEPhaseNeg = fieldmap
                     else:
-                        SEPhasePos = fieldmap['epi']
+                        SEPhasePos = fieldmap
 
-                seunwarpdir = layout.get_metadata(fieldmap_set[0]["epi"])["PhaseEncodingDirection"]
+                seunwarpdir = layout.get_metadata(fieldmap_set["epi"][0])["PhaseEncodingDirection"]
                 seunwarpdir = seunwarpdir.replace("-", "").replace("i","x").replace("j", "y").replace("k", "z")
 
                 #TODO check consistency of echo spacing instead of assuming it's all the same
-                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set[0]["epi"]):
-                    echospacing = layout.get_metadata(fieldmap_set[0]["epi"])["EffectiveEchoSpacing"]
+                if "EffectiveEchoSpacing" in layout.get_metadata(fieldmap_set["epi"][0]):
+                    echospacing = layout.get_metadata(fieldmap_set["epi"][0])["EffectiveEchoSpacing"]
                 elif "TotalReadoutTime" in layout.get_metadata(fieldmap_set["epi"][0]):
                     # HCP Pipelines do not allow users to specify total readout time directly
                     # Hence we need to reverse the calculations to provide echo spacing that would
@@ -312,8 +307,8 @@ if args.analysis_level == "participant":
                     # see https://github.com/Washington-University/Pipelines/blob/master/global/scripts/TopupPreprocessingAll.sh#L202
                     print("BIDS App wrapper: Did not find EffectiveEchoSpacing, calculating it from TotalReadoutTime")
                     # TotalReadoutTime = EffectiveEchoSpacing * (len(PhaseEncodingDirection) - 1)
-                    total_readout_time = layout.get_metadata(fieldmap_set[0]["epi"])["TotalReadoutTime"]
-                    phase_len = nibabel.load(fieldmap_set[0]["epi"]).shape[{"x": 0, "y": 1}[seunwarpdir]]
+                    total_readout_time = layout.get_metadata(fieldmap_set["epi"][0])["TotalReadoutTime"]
+                    phase_len = nibabel.load(fieldmap_set["epi"][0]).shape[{"x": 0, "y": 1}[seunwarpdir]]
                     echospacing = total_readout_time / float(phase_len - 1)
                 else:
                     raise RuntimeError("EffectiveEchoSpacing or TotalReadoutTime not defined for the fieldmap intended for T1w image. Please fix your BIDS dataset.")
