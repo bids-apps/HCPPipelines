@@ -162,14 +162,5 @@ RUN pip install https://github.com/Washington-University/gradunwarp/archive/v1.0
 
 COPY run.py version /
 RUN chmod +x /run.py
-COPY coeff.grad /
 
-# Singularity setup
-RUN /usr/bin/env |sed  '/^HOME/d' | sed '/^HOSTNAME/d' | sed  '/^USER/d' | sed '/^PWD/d' > /environment && \
-  chmod 755 /environment
-COPY entry.sh /singularity
-RUN chmod 755 /singularity
-
-RUN mkdir /bind && mkdir /scratch
-
-ENTRYPOINT ["/singularity"]
+ENTRYPOINT ["/run.py"]
