@@ -180,12 +180,17 @@ COPY config_powerline-shell.json /home/.powerline-shell.json
 
 # Directories
 RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
+
 ## binds
 RUN mkdir -p /bind/data_in && \
   mkdir -p /bind/data_out && \
   mkdir -p /bind/scripts
+
 ## PREpend user scripts to the path
 ENV PATH /bind/scripts:$PATH
+
+## add workbench to PATH
+ENV PATH /opt/workbench/bin_linux64:$PATH
 
 # setup singularity compatible entry points to run the initialization script
 RUN /usr/bin/env \
