@@ -68,7 +68,6 @@ def run_pre_freesurfer(**args):
     '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
-    print(cmd)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_freesurfer(**args):
@@ -204,11 +203,13 @@ parser.add_argument('--license_key', help='FreeSurfer license key - letters and 
                     required=True)
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pielines BIDS App version {}'.format(__version__))
-parser.add_argument('--anatunwarpdir', help='Unwarp direction for T1w and T2w volumes')
+parser.add_argument('--anat_unwarpdir', help='Unwarp direction for 3D volumes',
+                    choices=['x', 'y', 'z', '-x', '-y', '-z'], default="NONE")
 
 args = parser.parse_args()
 
-
+if (args.gdcoeffs != 'NONE') and ('PreFreeSurfer' in args.stages) and (args.anat_unwarpdir == "NONE"):
+    raise AssertionError('--anat_unwarpdir must be specified to use PreFreeSurfer distortion correction')
 
 run("bids-validator " + args.bids_dir)
 
@@ -260,13 +261,9 @@ if args.analysis_level == "participant":
             t1_spacing = layout.get_metadata(t1ws[0])["DwellTime"]
             t2_spacing = layout.get_metadata(t2ws[0])["DwellTime"]
 
-            # unwarpdir = layout.get_metadata(t1ws[0])["PhaseEncodingDirection"]
-            # unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
-            #if len(unwarpdir) == 2:
-            #    unwarpdir = unwarpdir[0]+"-"
-            #
-
-            unwarpdir = 'z'
+            # use an unwarpdir specified on the command line
+            # this is different from the SE direction
+            unwarpdir = args.anat_unwarpdir
 
             fmap_args.update({"t1samplespacing": "%.8f"%t1_spacing,
                               "t2samplespacing": "%.8f"%t2_spacing,
