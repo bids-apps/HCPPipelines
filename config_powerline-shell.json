@@ -1,0 +1,19 @@
+{
+  "segments": [
+    {
+      "type": "stdout",
+      "command": ["echo", "BIDS_HCP_BIRC"]
+    },
+    "virtual_env",
+    "time",
+    "ssh",
+    "hostname",
+    "username",
+    "cwd",
+    "git",
+    "jobs",
+    "root"
+  ],
+  "mode": "compatible",
+  "theme": "gruvbox"
+}

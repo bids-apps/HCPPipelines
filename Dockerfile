@@ -165,9 +165,18 @@ RUN chmod +x /run.py
 
 # Customization for UConn BIRC
 
-# bash prompt
-RUN cat /etc/bash.bashrc | sed -e "s/PS1=.*/PS1='\${debian_chroot:+(\$debian_chroot)}\\\u@\\\h \\\[\\\e[1;36m\\\](BIDS_HCP_BIRC)\\\[\\\e[m\\\] \\\w\\\\$ '/" > /tmp/tmp.bashrc && \
-mv /tmp/tmp.bashrc /etc/bash.bashrc
+# UI improvement
+## text editor: VIM
+RUN apt-get update -qq \
+    && apt-get install -y \
+       vim \
+    && apt-get clean
+
+## fancy bash prompt: powerline shell
+RUN pip install powerline-shell
+COPY bashrc /tmp/tmp.bashrc
+RUN cat /tmp/tmp.bashrc >> /etc/bash.bashrc && rm /tmp/tmp.bashrc
+COPY config_powerline-shell.json /home/.powerline-shell.json
 
 # Directories
 RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
