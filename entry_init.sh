@@ -3,7 +3,7 @@
 source /environment
 
 # copy powerline-shell config
-cp /home/.powerline-shell.json $HOME
+cp /powerline-shell.json $HOME/.config/powerline-shell/config.json
 
 # run the user command
 exec "$@"

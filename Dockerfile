@@ -176,7 +176,7 @@ RUN apt-get update -qq \
 RUN pip install powerline-shell
 COPY bashrc /tmp/tmp.bashrc
 RUN cat /tmp/tmp.bashrc >> /etc/bash.bashrc && rm /tmp/tmp.bashrc
-COPY config_powerline-shell.json /home/.powerline-shell.json
+COPY config_powerline-shell.json /powerline-shell.json
 
 # Directories
 RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
