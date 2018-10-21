@@ -2,10 +2,8 @@
 # entrypoint pre-initialization
 source /environment
 
-# copy powerline-shell config
-if [ ! -f $HOME/.powerline-shell.json ]; then
-  cp /powerline-shell.json $HOME/.powerline-shell.json
-fi
+# make symlink to powerline-shell config
+ln -sf /powerline-shell.json $HOME/.powerline-shell.json
 
 # run the user command
 exec "$@"
