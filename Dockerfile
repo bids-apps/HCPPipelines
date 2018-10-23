@@ -16,6 +16,10 @@ COPY bashrc /tmp/tmp.bashrc
 RUN cat /tmp/tmp.bashrc >> /etc/bash.bashrc && rm /tmp/tmp.bashrc
 COPY config_powerline-shell.json /powerline-shell.json
 
+# copy updated run.py
+COPY run.py version /
+RUN chmod +x /run.py
+
 # Directories
 RUN mkdir /share && mkdir /scratch && mkdir /local-scratch
 
