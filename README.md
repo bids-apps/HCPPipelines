@@ -61,6 +61,9 @@ This App has the following command line arguments:
       --n_cpus N_CPUS       Number of CPUs/cores available to use.
       --stages {PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface,DiffusionPreprocessing} [{PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface,DiffusionPreprocessing} ...]
                             Which stages to run. Space separated list.
+      --anat_unwarpdir		 Direction to unwarp 3D anatomicals. Required if
+      							 distortion correction and PreFreeSurfer are specified.
+      							 One of x, y, z, -x, -y, -z.
       --license_key LICENSE_KEY
                             FreeSurfer license key - letters and numbers after "*"
                             in the email you received after registration. To
