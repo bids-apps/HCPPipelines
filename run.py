@@ -362,11 +362,17 @@ if args.analysis_level == "participant":
                 SEPhaseNeg = None
                 SEPhasePos = None
                 for fieldmap in fieldmap_set:
-                    enc_dir = layout.get_metadata(fieldmap["epi"])["PhaseEncodingDirection"]
-                    if "-" in enc_dir:
+                    enc_dir = fieldmap['epi'].split('_dir-')[1].split('_')[0]
+                    if "AP" in enc_dir:
                         SEPhaseNeg = fieldmap['epi']
                     else:
                         SEPhasePos = fieldmap['epi']
+                #for fieldmap in fieldmap_set:
+                #    enc_dir = layout.get_metadata(fieldmap["epi"])["PhaseEncodingDirection"]
+                #    if "-" in enc_dir:
+                #        SEPhaseNeg = fieldmap['epi']
+                #    else:
+                #        SEPhasePos = fieldmap['epi']
                 echospacing = layout.get_metadata(fmritcs)["EffectiveEchoSpacing"]
                 unwarpdir = layout.get_metadata(fmritcs)["PhaseEncodingDirection"]
                 unwarpdir = unwarpdir.replace("i","x").replace("j", "y").replace("k", "z")
