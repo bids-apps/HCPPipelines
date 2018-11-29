@@ -152,6 +152,12 @@ def run_generic_fMRI_surface_processsing(**args):
       '--regname="{regname}"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    
+def run_generic_fMRI_ICAFIX_processsing(**args):
+    args.update(os.environ)
+    cmd = '/opt/fix/hcp_fix ' +  '{path}' + '/' + '{subject}' + '/MNINonLinear/Results/' + '{fmriname}'  + '/' + '{fmriname}' + '.nii.gz 2000'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
 def run_diffusion_processsing(**args):
     args.update(os.environ)
@@ -191,9 +197,9 @@ parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
-                                       'fMRISurface', 'DiffusionPreprocessing'],
+                                       'fMRISurface', 'ICAFIX', 'DiffusionPreprocessing'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
-                            'fMRIVolume', 'fMRISurface',
+                            'fMRIVolume', 'fMRISurface', 'ICAFIX',
                             'DiffusionPreprocessing'])
 parser.add_argument('--coreg', help='Coregistration method to use',
                     choices=['MSMSulc', 'FS'], default='MSMSulc')
@@ -418,7 +424,15 @@ if args.analysis_level == "participant":
                                                        n_cpus=args.n_cpus,
                                                        grayordinatesres=grayordinatesres,
                                                        lowresmesh=lowresmesh,
-                                                       regname=args.coreg))
+                                                       regname=args.coreg)),
+                                ("ICAFIX", partial(run_generic_fMRI_ICAFIX_processsing,
+                                                       path=args.output_dir,
+                                                       subject="sub-%s"%subject_label,
+                                                       fmriname=fmriname,
+                                                       fmrires=fmrires,
+                                                       n_cpus=args.n_cpus,
+                                                       grayordinatesres=grayordinatesres,
+                                                       lowresmesh=lowresmesh))                                                                    
                                 ])
             for stage, stage_func in func_stages_dict.iteritems():
                 if stage in args.stages:
