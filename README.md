@@ -13,6 +13,14 @@ Among other things, these tools implement the Minimal Preprocessing Pipeline
 
 **This BIDS App requires that each subject has at least one T1w and one T2w scan.** Lack fMRI or dMRI scans is handled robustly.  Note that while anatomicals (T1w, T2w scans) can be processed without a fieldmap, a fieldmap is mandatory for processing fMRI scans.
 
+### Notes
+
+This image includes FSL 5.0.9-5 from NeuroDebian as earlier versions of FSL are no longer available. This is not officially supported by HCP:
+
+> NB: This version of the HCP Pipelines requires version 5.0.6 of FSL, not version 5.0.6 or greater. This version of the HCP Pipelines is not fully tested with the any version of FSL other than version 5.0.6. Preliminary testing has detected that there is a difference in behavior between version 5.0.6 of FSL and version 5.0.7 of FSL which, while it is an intentional improvement to FSL, is known to cause the Task Analysis pipeline in particular to fail.
+
+> There is currently a separate branch in this repository named fsl-5.0.7-changes. That branch is not yet included in a released version of the code, but it contains changes to the Task Analysis pipeline that we expect will fix that pipeline so that it works with version 5.0.7 of FSL. These changes are not fully tested, but they are available to anyone who wants to run the Task Analysis pipeline and use FSL 5.0.7.
+
 
 ### Documentation
 [Release Notes, Installation, and Usage][release-install-use]

@@ -132,7 +132,7 @@ RUN wget -qO- https://deb.nodesource.com/setup_10.x | bash - && \
 
 # Install FSL 5.0.9 now to ensure it is not removed
 RUN apt-get update && \
-    apt-get install -y fsl=5.0.9-4~nd80+1 && \
+    apt-get install -y fsl=5.0.9-5~nd80+1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
