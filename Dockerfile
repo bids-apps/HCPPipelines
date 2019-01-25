@@ -213,8 +213,8 @@ RUN mv /opt/fix/hcp_fix /opt/fix/hcp_fix.old
 COPY hcp_fix /opt/fix/hcp_fix
 RUN chmod +x /opt/fix/hcp_fix
 
-RUN wget http://argyelan.com/ZHH/ZHH30_hp2000.RData
-COPY ZHH30_hp2000.RData /opt/fix/training_files/ZHH30_hp2000.RData
+RUN wget http://argyelan.com/ZHH/ZHH30_hp2000.RData && \
+    mv ZHH30_hp2000.RData /opt/fix/training_files/ZHH30_hp2000.RData
 COPY zhh_fix /opt/fix/zhh_fix
 RUN chmod +x /opt/fix/zhh_fix
 
