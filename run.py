@@ -158,7 +158,10 @@ def run_generic_fMRI_ICAFIX_processsing(**args):
     cmd = '/opt/fix/hcp_fix ' +  '{path}' + '/' + '{subject}' + '/MNINonLinear/Results/' + '{fmriname}'  + '/' + '{fmriname}' + '.nii.gz 2000'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
-
+    cmd = '/opt/fix/zhh_fix ' +  '{path}' + '/' + '{subject}' + '/MNINonLinear/Results/' + '{fmriname}'  + '/' + '{fmriname}' + '.nii.gz 2000'
+    cmd = cmd.format(**args)
+    run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
+    
 def run_diffusion_processsing(**args):
     args.update(os.environ)
     cmd = '{HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh ' + \
