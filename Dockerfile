@@ -15,6 +15,9 @@ RUN pip install powerline-shell
 COPY bashrc /tmp/tmp.bashrc
 RUN cat /tmp/tmp.bashrc >> /etc/bash.bashrc && rm /tmp/tmp.bashrc
 COPY config_powerline-shell.json /powerline-shell.json
+RUN powerline_config=$(echo $(cat /powerline-shell.json)) && \
+      sed -i "/DEFAULT_CONFIG = [{]/,/[}]/cDEFAULT_CONFIG = $powerline_config" \
+      /usr/local/miniconda/lib/python2.7/site-packages/powerline_shell/__init__.py
 
 # copy updated run.py
 COPY run.py version /
