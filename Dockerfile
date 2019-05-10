@@ -162,21 +162,6 @@ RUN pip install https://github.com/Washington-University/gradunwarp/archive/v1.0
 COPY run.py version /
 RUN chmod +x /run.py
 
-# setup singularity compatible entry points to run the initialization script
-RUN /usr/bin/env \
-| sed  '/^HOME/d' \
-| sed '/^HOSTNAME/d' \
-| sed  '/^USER/d' \
-| sed '/^PWD/d' >> /environment && \
-chmod 755 /environment
-
-COPY entry_init.sh /singularity
-RUN chmod 755 /singularity
-
-RUN echo 'source $FSLDIR/etc/fslconf/fsl.sh' >> /singularity
-
-ENTRYPOINT ["/singularity"]
-
 # UI improvement
 ## text editor: VIM
 RUN apt-get update -qq \
@@ -211,7 +196,18 @@ ENV PATH=/bind/scripts:$PATH
 ## add workbench to PATH
 ENV PATH=/opt/workbench/bin_linux64:$PATH
 
+# setup singularity compatible entry points to run the initialization script
+RUN /usr/bin/env \
+| sed  '/^HOME/d' \
+| sed '/^HOSTNAME/d' \
+| sed  '/^USER/d' \
+| sed '/^PWD/d' >> /environment && \
+chmod 755 /environment
 
+COPY entry_init.sh /singularity
+RUN chmod 755 /singularity
 
+RUN echo 'source $FSLDIR/etc/fslconf/fsl.sh' >> /singularity
 
+ENTRYPOINT ["/singularity"]
 
