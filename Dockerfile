@@ -144,9 +144,8 @@ RUN curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-centos6_64.tar.gz \
          | tar -xz -C /usr/local
 
 # Configure environment
-ENV FSLDIR="/usr/local/fsl" \
-    PATH=$FSLDIR/bin:$PATH \
-    PATH=$FSLDIR/lib:$PATH
+ENV FSLDIR="/usr/local/fsl"
+ENV PATH="$FSLDIR/bin:$PATH"
 
 # upgrade our libstdc++
 RUN echo "deb http://ftp.de.debian.org/debian stretch main" >> /etc/apt/sources.list && \
@@ -207,10 +206,10 @@ RUN mkdir -p /bind/data_in && \
   mkdir -p /bind/scripts
 
 ## PREpend user scripts to the path
-ENV PATH /bind/scripts:$PATH
+ENV PATH=/bind/scripts:$PATH
 
 ## add workbench to PATH
-ENV PATH /opt/workbench/bin_linux64:$PATH
+ENV PATH=/opt/workbench/bin_linux64:$PATH
 
 ###############################################################################
 # bidskit (https://github.com/rhancockn/bidskit)
