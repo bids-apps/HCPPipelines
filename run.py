@@ -9,7 +9,7 @@ from glob import glob
 from subprocess import Popen, PIPE
 from shutil import rmtree
 import subprocess
-from bids.grabbids import BIDSLayout
+from bids.layout import BIDSLayout
 from functools import partial
 from collections import OrderedDict
 
@@ -58,7 +58,7 @@ def run_pre_freesurfer(**args):
     '--echodiff="{echodiff}" ' + \
     '--SEPhaseNeg="{SEPhaseNeg}" ' + \
     '--SEPhasePos="{SEPhasePos}" ' + \
-    '--echospacing="{echospacing}" ' + \
+    '--seechospacing="{echospacing}" ' + \
     '--seunwarpdir="{seunwarpdir}" ' + \
     '--t1samplespacing="{t1samplespacing}" ' + \
     '--t2samplespacing="{t2samplespacing}" ' + \
@@ -78,8 +78,7 @@ def run_freesurfer(**args):
       '--subjectDIR="{subjectDIR}" ' + \
       '--t1="{path}/{subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
       '--t1brain="{path}/{subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
-      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" ' + \
-      '--printcom=""'
+      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" '
     cmd = cmd.format(**args)
 
     if not os.path.exists(os.path.join(args["subjectDIR"], "fsaverage")):
@@ -202,7 +201,7 @@ parser.add_argument('--gdcoeffs', help='Gradients coefficients file',
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
 parser.add_argument('-v', '--version', action='version',
-                    version='HCP Pielines BIDS App version {}'.format(__version__))
+                    version='HCP Pipelines BIDS App version {}'.format(__version__))
 parser.add_argument('--anat_unwarpdir', help='Unwarp direction for 3D volumes',
                     choices=['x', 'y', 'z', '-x', '-y', '-z'], default="NONE")
 
@@ -213,7 +212,7 @@ if (args.gdcoeffs != 'NONE') and ('PreFreeSurfer' in args.stages) and (args.anat
 
 run("bids-validator " + args.bids_dir)
 
-layout = BIDSLayout(args.bids_dir, exclude=['derivatives'])
+layout = BIDSLayout(args.bids_dir, derivatives=False, absolute_paths=True)
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
@@ -227,11 +226,12 @@ else:
 if args.analysis_level == "participant":
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
-        t1ws = [f.filename for f in layout.get(subject=subject_label,
-                                               type='T1w',
+        t1ws = [f.path for f in layout.get(subject=subject_label,
+                                               suffix='T1w',
                                                extensions=["nii.gz", "nii"])]
-        t2ws = [f.filename for f in layout.get(subject=subject_label,
-                                               type='T2w',
+        print(t1ws)
+        t2ws = [f.path for f in layout.get(subject=subject_label,
+                                               suffix='T2w',
                                                extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
         assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
@@ -269,7 +269,7 @@ if args.analysis_level == "participant":
                               "t2samplespacing": "%.8f"%t2_spacing,
                               "unwarpdir": unwarpdir})
 
-            if fieldmap_set[0]["type"] == "phasediff":
+            if fieldmap_set[0]["suffix"] == "phasediff":
                 merged_file = "%s/tmp/%s/magfile.nii.gz"%(args.output_dir, subject_label)
                 run("mkdir -p %s/tmp/%s/ && fslmerge -t %s %s %s"%(args.output_dir,
                 subject_label,
@@ -286,7 +286,7 @@ if args.analysis_level == "participant":
                                   "fmapphase": fieldmap_set["phasediff"],
                                   "echodiff": "%.6f"%te_diff,
                                   "avgrdcmethod": "SiemensFieldMap"})
-            elif fieldmap_set[0]["type"] == "epi":
+            elif fieldmap_set[0]["suffix"] == "epi":
                 SEPhaseNeg = None
                 SEPhasePos = None
                 for fieldmap in fieldmap_set:
@@ -348,8 +348,8 @@ if args.analysis_level == "participant":
             if stage in args.stages:
                 stage_func()
 
-        bolds = [f.filename for f in layout.get(subject=subject_label,
-                                                type='bold',
+        bolds = [f.path for f in layout.get(subject=subject_label,
+                                                suffix='bold',
                                                 extensions=["nii.gz", "nii"])]
         for fmritcs in bolds:
             fmriname = "_".join(fmritcs.split("sub-")[-1].split("_")[1:]).split(".")[0]
@@ -420,7 +420,7 @@ if args.analysis_level == "participant":
                 if stage in args.stages:
                     stage_func()
 
-        dwis = layout.get(subject=subject_label, type='dwi',
+        dwis = layout.get(subject=subject_label, suffix='dwi',
                                                  extensions=["nii.gz", "nii"])
 
         # print(dwis)
