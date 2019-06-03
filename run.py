@@ -360,7 +360,7 @@ if args.analysis_level == "participant":
                 fmriscout = "NONE"
 
             fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
-            if fieldmap_set and len(fieldmap_set) == 2 and all(item["type"] == "epi" for item in fieldmap_set):
+            if fieldmap_set and len(fieldmap_set) == 2 and all(item["suffix"] == "epi" for item in fieldmap_set):
                 SEPhaseNeg = None
                 SEPhasePos = None
                 for fieldmap in fieldmap_set:
