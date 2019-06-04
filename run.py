@@ -229,7 +229,6 @@ if args.analysis_level == "participant":
         t1ws = [f.path for f in layout.get(subject=subject_label,
                                                suffix='T1w',
                                                extensions=["nii.gz", "nii"])]
-        print(t1ws)
         t2ws = [f.path for f in layout.get(subject=subject_label,
                                                suffix='T2w',
                                                extensions=["nii.gz", "nii"])]
