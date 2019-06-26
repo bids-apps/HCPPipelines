@@ -1,6 +1,4 @@
-# Use Jessie for correct perl version
-# https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2016-May/045407.html
-FROM neurodebian:jessie-non-free
+FROM ubuntu:xenial-20190515
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV LANG="C.UTF-8" \
@@ -17,10 +15,11 @@ RUN apt-get -qq update && \
       perl-modules \
       tar \
       tcsh \
-      wget && \
+      wget \
+      libxmu6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos4_x86_64-stable-pub-v5.3.0-HCP.tar.gz \
+    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
     | tar zxv -C /opt \
       --exclude='freesurfer/trctrain' \
       --exclude='freesurfer/subjects/fsaverage_sym' \
@@ -55,10 +54,6 @@ ENV OS=Linux \
     MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
     PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
 
-# Install MCR 2016b
-ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
-    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" \
-    LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
@@ -75,31 +70,36 @@ RUN apt-get update -qq \
     && rm -rf /tmp/*
 
 # Install miniconda2
+# still need python 2 for gradunwarp
 ENV PATH="/usr/local/miniconda/bin:$PATH"
 RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_64.sh && \
     bash Miniconda2-4.5.4-Linux-x86_64.sh -b -p /usr/local/miniconda && \
     rm Miniconda2-4.5.4-Linux-x86_64.sh && \
     conda config --add channels conda-forge && \
-    conda install -y mkl mkl-service numpy nibabel pandas && sync && \
+    conda install -y mkl=2019.3 mkl-service=2.0.2 numpy=1.16.4 nibabel=2.4.1 pandas=0.24.2 && sync && \
     conda clean -tipsy && sync && \
-    pip install --no-cache-dir pybids[analysis]==0.6.3
+    pip install --no-cache-dir pybids==0.9.1
 
 # Install connectome-workbench
 WORKDIR /opt
-RUN wget -q https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.0.zip -O wb.zip \
+RUN apt-get -qq update && \
+    apt-get install -yq libfreetype6 libglib2.0 && \
+    wget -q https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
     && unzip wb.zip \
-    && rm wb.zip
+    && rm wb.zip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ENV CARET7DIR="/opt/workbench/bin_linux64"
 
 # Install HCP Pipelines and MSM binaries
 RUN apt-get -qq update && \
     apt-get install -yq --no-install-recommends gcc g++ libglu1 && \
     rm -rf /tmp/* && \
-    wget -qO- https://github.com/Washington-University/Pipelines/archive/v3.26.1.tar.gz | tar xz -C /tmp && \
+    wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp && \
     mv /tmp/* /opt/HCP-Pipelines && \
-    rm -rf /tmp/* && \
-    wget -qO- https://www.doc.ic.ac.uk/~ecr05/MSM_HOCR_v2/MSM_HOCR_v2-download.tgz | tar xz -C /tmp && \
-    mv /tmp/homes/ecr05/MSM_HOCR_v2/Ubuntu /opt/HCP-Pipelines/MSMBinaries && \
+    mkdir /opt/HCP-Pipelines/MSMBinaries && \
+    wget -q https://github.com/ecr05/MSM_HOCR/releases/download/1.0/msm_ubuntu14.04 -O /opt/HCP-Pipelines/MSMBinaries/msm &&  \
+    chmod 755 /opt/HCP-Pipelines/MSMBinaries/msm && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -126,41 +126,55 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
 RUN wget -qO- https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get update && \
     apt-get install -y --no-install-recommends nodejs && \
-    npm install -g bids-validator@0.26.13 && \
+    npm install -g bids-validator@1.2.3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install FSL 5.0.9 now to ensure it is not removed
-RUN apt-get update && \
-    apt-get install -y fsl=5.0.9-4~nd80+1 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install FSL
+RUN curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos6_64.tar.gz \
+         | tar -xz -C /usr/local && \
+          /usr/local/fsl/etc/fslconf/fslpython_install.sh -f /usr/local/fsl
+
 
 # Configure environment
-ENV FSLDIR=/usr/share/fsl/5.0
+ENV FSLDIR=/usr/local/fsl
 ENV FSL_DIR="${FSLDIR}" \
     FSLOUTPUTTYPE=NIFTI_GZ \
-    PATH=/usr/lib/fsl/5.0:$PATH \
+    PATH=${FSLDIR}/bin:$PATH \
     FSLMULTIFILEQUIT=TRUE \
-    POSSUMDIR=/usr/share/fsl/5.0 \
-    LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH \
+    POSSUMDIR=${FSLDIR} \
+    LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
     FSLTCLSH=/usr/bin/tclsh \
     FSLWISH=/usr/bin/wish \
     FSLOUTPUTTYPE=NIFTI_GZ
 
-# upgrade our libstdc++
-RUN echo "deb http://ftp.de.debian.org/debian stretch main" >> /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y libstdc++6
+# install gradient_unwarp.py (v1.1.0)
+WORKDIR /tmp
+RUN wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
+  unzip v1.1.0.zip && \
+  cd gradunwarp-1.1.0 && \
+  python setup.py install && \
+  rm -rf gradunwarp-1.1.0 v1.1.0.zip
+
+
+# Fix Topup scripts
+
+RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/dc7aae3a7a1cae920b390500d85536681b14108c/global/scripts/TopupPreprocessingAll.sh -O /opt/HCP-Pipelines/global/scripts/TopupPreprocessingAll.sh
+
+# Install MCR 2016b
+ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
+    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" \
+    LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+
 
 # overwrite matlab mcr shared object
 RUN rm /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6 && \
     ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6
 
-# install gradient_unwarp.py (v1.0.3)
-RUN pip install https://github.com/Washington-University/gradunwarp/archive/v1.0.3.zip
+
 
 COPY run.py version /
 RUN chmod +x /run.py
 
-ENTRYPOINT ["/run.py"]
+
+CMD ["/run.py"]
