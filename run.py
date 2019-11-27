@@ -185,6 +185,12 @@ parser.add_argument('--participant_label', help='The label of the participant th
                    'provided all subjects should be analyzed. Multiple '
                    'participants can be specified with a space separated list.',
                    nargs="+")
+parser.add_argument('--session_label', help='The label of the session that should be analyzed. The label '
+                   'corresponds to ses-<session_label> from the BIDS spec '
+                   '(so it does not include "ses-"). If this parameter is not '
+                   'provided all session should be analyzed. Multiple '
+                   'sessions can be specified with a space separated list.',
+                   nargs="+")
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
                    default=1, type=int)
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
@@ -210,7 +216,7 @@ args = parser.parse_args()
 if (args.gdcoeffs != 'NONE') and ('PreFreeSurfer' in args.stages) and (args.anat_unwarpdir == "NONE"):
     raise AssertionError('--anat_unwarpdir must be specified to use PreFreeSurfer distortion correction')
 
-run("bids-validator " + args.bids_dir)
+#run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir, derivatives=False, absolute_paths=True)
 subjects_to_analyze = []
@@ -221,15 +227,22 @@ if args.participant_label:
 else:
     subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
     subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
+# only use a subset of sessions
+if args.session_label:
+    session_to_analyze = args.session_label
+else:
+    session_to_analyze = None
 
 # running participant level
 if args.analysis_level == "participant":
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
         t1ws = [f.path for f in layout.get(subject=subject_label,
+                                               session=session_to_analyze,
                                                suffix='T1w',
                                                extensions=["nii.gz", "nii"])]
         t2ws = [f.path for f in layout.get(subject=subject_label,
+                                               session=session_to_analyze,
                                                suffix='T2w',
                                                extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
@@ -348,6 +361,7 @@ if args.analysis_level == "participant":
                 stage_func()
 
         bolds = [f.path for f in layout.get(subject=subject_label,
+                                                session=session_to_analyze,
                                                 suffix='bold',
                                                 extensions=["nii.gz", "nii"])]
         for fmritcs in bolds:
