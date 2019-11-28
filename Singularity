@@ -22,7 +22,6 @@ tcsh \
 wget \
 libxmu6 && \
 apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
 wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
 | tar zxv -C /opt \
 --exclude='freesurfer/trctrain' \
@@ -56,7 +55,7 @@ MNI_DATAPATH=/opt/freesurfer/mni/data
 FMRI_ANALYSIS_DIR=/opt/freesurfer/fsfast
 PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5
 MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5
-PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
+export PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
 
 
 apt-get update -qq \
@@ -66,46 +65,41 @@ libxpm-dev \
 libxt6 \
 unzip \
 && apt-get clean \
-&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 && echo "Downloading MATLAB Compiler Runtime ..." \
 && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
 && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
-&& /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes \
-&& rm -rf /tmp/*
+&& /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes
 
 # Install miniconda2
 # still need python 2 for gradunwarp
-PATH="/usr/local/miniconda/bin:$PATH"
-curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_64.sh && \
-bash Miniconda2-4.5.4-Linux-x86_64.sh -b -p /usr/local/miniconda && \
-rm Miniconda2-4.5.4-Linux-x86_64.sh && \
+export PATH="/usr/local/miniconda/bin:$PATH"
+curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x86_64.sh && \
+bash Miniconda2-4.7.12.1-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+rm Miniconda2-4.7.12.1-Linux-x86_64.sh && \
 conda config --add channels conda-forge && \
 conda install -y mkl=2019.3 mkl-service=2.0.2 numpy=1.16.4 nibabel=2.4.1 pandas=0.24.2 && sync && \
 conda clean -tipsy && sync && \
-pip install --no-cache-dir pybids==0.9.1
+/usr/local/miniconda/bin/pip install --no-cache-dir pybids==0.9.1
 
 # Install connectome-workbench
 cd /opt
 apt-get -qq update && \
 apt-get install -yq libfreetype6 libglib2.0 && \
-wget -q https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
+wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
 && unzip wb.zip \
 && rm wb.zip && \
 apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 CARET7DIR="/opt/workbench/bin_linux64"
 
 # Install HCP Pipelines and MSM binaries
 apt-get -qq update && \
 apt-get install -yq --no-install-recommends gcc g++ libglu1 && \
-rm -rf /tmp/* && \
-wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp && \
-mv /tmp/* /opt/HCP-Pipelines && \
+wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp/ && \
+mv /tmp/HCPpipelines-4.0.0 /opt/HCP-Pipelines && \
 mkdir /opt/HCP-Pipelines/MSMBinaries && \
 wget -q https://github.com/ecr05/MSM_HOCR/releases/download/1.0/msm_ubuntu14.04 -O /opt/HCP-Pipelines/MSMBinaries/msm &&  \
 chmod 755 /opt/HCP-Pipelines/MSMBinaries/msm && \
-apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+apt-get clean
 
 cd /
 
@@ -131,8 +125,7 @@ wget -qO- https://deb.nodesource.com/setup_10.x | bash - && \
 apt-get update && \
 apt-get install -y --no-install-recommends nodejs && \
 npm install -g bids-validator@1.2.3 && \
-apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+apt-get clean
 
 # Install FSL
 curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos6_64.tar.gz \
@@ -157,7 +150,7 @@ cd /tmp
 wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
 unzip v1.1.0.zip && \
 cd gradunwarp-1.1.0 && \
-python setup.py install && \
+$/usr/local/miniconda/bin/python setup.py install && \
 rm -rf gradunwarp-1.1.0 v1.1.0.zip
 
 
@@ -232,7 +225,7 @@ export MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91"
 export LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
 %runscript
 cd /tmp
-exec /bin/bash /run.py "$@"
+exec /run.py "$@"
 %startscript
 cd /tmp
-exec /bin/bash /run.py "$@"
+exec /run.py "$@"
