@@ -210,13 +210,17 @@ parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 parser.add_argument('--anat_unwarpdir', help='Unwarp direction for 3D volumes',
                     choices=['x', 'y', 'z', '-x', '-y', '-z'], default="NONE")
+parser.add_argument('--skip_bids_validation', '--skip-bids-validation', action='store_true',
+                    default=False,
+                    help='assume the input dataset is BIDS compliant and skip the validation')
 
 args = parser.parse_args()
 
 if (args.gdcoeffs != 'NONE') and ('PreFreeSurfer' in args.stages) and (args.anat_unwarpdir == "NONE"):
     raise AssertionError('--anat_unwarpdir must be specified to use PreFreeSurfer distortion correction')
 
-#run("bids-validator " + args.bids_dir)
+if not args.skip_bids_validation:
+    run("bids-validator " + args.bids_dir)
 
 layout = BIDSLayout(args.bids_dir, derivatives=False, absolute_paths=True)
 subjects_to_analyze = []
