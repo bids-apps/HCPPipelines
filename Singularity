@@ -150,9 +150,8 @@ cd /tmp
 wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
 unzip v1.1.0.zip && \
 cd gradunwarp-1.1.0 && \
-$/usr/local/miniconda/bin/python setup.py install && \
-rm -rf gradunwarp-1.1.0 v1.1.0.zip
-
+/usr/local/miniconda/bin/python setup.py install && \
+rm -rf gradunwarp-1.1.0 v1.1.0.zip 
 
 # Fix Topup scripts
 
