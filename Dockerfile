@@ -83,8 +83,8 @@ RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x8
 # Install connectome-workbench
 WORKDIR /opt
 RUN apt-get -qq update && \
-    apt-get install -yq libfreetype6 libglib2.0
-RUN wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.1.zip -O wb.zip \
+    apt-get install -yq libfreetype6 libglib2.0 && \
+    wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.1.zip -O wb.zip \
     && unzip wb.zip \
     && rm wb.zip && \
     apt-get clean && \
@@ -151,7 +151,7 @@ ENV FSL_DIR="${FSLDIR}" \
 # install gradient_unwarp.py (v1.1.0)
 WORKDIR /tmp
 RUN wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
-  unzip gradunwarp-1.1.0.zip && \
+  unzip v1.1.0.zip && \
   cd gradunwarp-1.1.0 && \
   python setup.py install && \
   rm -rf gradunwarp-1.1.0 gradunwarp-1.1.0.zip
