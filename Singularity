@@ -22,7 +22,7 @@ tcsh \
 wget \
 libxmu6 && \
 apt-get clean && \
-wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
+wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
 | tar zxv -C /opt \
 --exclude='freesurfer/trctrain' \
 --exclude='freesurfer/subjects/fsaverage_sym' \
@@ -68,7 +68,8 @@ unzip \
 && echo "Downloading MATLAB Compiler Runtime ..." \
 && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
 && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
-&& /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes
+&& /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes \
+&& rm -Rf /tmp/mcr.zip /tmp/mcrtmp
 
 # Install miniconda2
 # still need python 2 for gradunwarp
@@ -85,7 +86,7 @@ conda clean -tipsy && sync && \
 cd /opt
 apt-get -qq update && \
 apt-get install -yq libfreetype6 libglib2.0 && \
-wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
+wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.1.zip -O wb.zip \
 && unzip wb.zip \
 && rm wb.zip && \
 apt-get clean && \
@@ -148,10 +149,10 @@ FSLOUTPUTTYPE=NIFTI_GZ
 # install gradient_unwarp.py (v1.1.0)
 cd /tmp
 wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
-unzip v1.1.0.zip && \
+unzip -u v1.1.0.zip && \
 cd gradunwarp-1.1.0 && \
 /usr/local/miniconda/bin/python setup.py install && \
-rm -rf gradunwarp-1.1.0 v1.1.0.zip 
+rm -rf gradunwarp-1.1.0 v1.1.0.zip
 
 # Fix Topup scripts
 
@@ -221,7 +222,7 @@ export FSLWISH=/usr/bin/wish
 export FSLOUTPUTTYPE=NIFTI_GZ
 export MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab"
 export MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91"
-export LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/usr/local/miniconda/lib:/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
 %runscript
 cd /tmp
 exec /run.py "$@"

@@ -19,7 +19,7 @@ RUN apt-get -qq update && \
       libxmu6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
+    wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
     | tar zxv -C /opt \
       --exclude='freesurfer/trctrain' \
       --exclude='freesurfer/subjects/fsaverage_sym' \
@@ -72,19 +72,19 @@ RUN apt-get update -qq \
 # Install miniconda2
 # still need python 2 for gradunwarp
 ENV PATH="/usr/local/miniconda/bin:$PATH"
-RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_64.sh && \
-    bash Miniconda2-4.5.4-Linux-x86_64.sh -b -p /usr/local/miniconda && \
-    rm Miniconda2-4.5.4-Linux-x86_64.sh && \
+RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x86_64.sh && \
+    bash Miniconda2-4.7.12.1-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda2-4.7.12.1-Linux-x86_64.sh && \
     conda config --add channels conda-forge && \
     conda install -y mkl=2019.3 mkl-service=2.0.2 numpy=1.16.4 nibabel=2.4.1 pandas=0.24.2 && sync && \
     conda clean -tipsy && sync && \
-    pip install --no-cache-dir pybids==0.9.1
+    /usr/local/miniconda/bin/pip install --no-cache-dir pybids==0.9.1
 
 # Install connectome-workbench
 WORKDIR /opt
 RUN apt-get -qq update && \
     apt-get install -yq libfreetype6 libglib2.0 && \
-    wget -q https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
+    wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.1.zip -O wb.zip \
     && unzip wb.zip \
     && rm wb.zip && \
     apt-get clean && \
@@ -154,8 +154,7 @@ RUN wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.z
   unzip v1.1.0.zip && \
   cd gradunwarp-1.1.0 && \
   python setup.py install && \
-  rm -rf gradunwarp-1.1.0 v1.1.0.zip
-
+  rm -rf gradunwarp-1.1.0 gradunwarp-1.1.0.zip
 
 # Fix Topup scripts
 
