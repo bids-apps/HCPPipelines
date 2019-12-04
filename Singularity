@@ -90,7 +90,7 @@ wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-li
 && unzip wb.zip \
 && rm wb.zip && \
 apt-get clean && \
-CARET7DIR="/opt/tmp/mcrtmp/workbench/bin_linux64"
+CARET7DIR="/opt/workbench/bin_linux64"
 
 # Install HCP Pipelines and MSM binaries
 apt-get -qq update && \
