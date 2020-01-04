@@ -233,20 +233,20 @@ else:
     subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
 # only use a subset of sessions
 if args.session_label:
-    session_to_analyze = args.session_label
+    session_to_analyze = dict(session=args.session_label)
 else:
-    session_to_analyze = None
+    session_to_analyze = dict()
 
 # running participant level
 if args.analysis_level == "participant":
     # find all T1s and skullstrip them
     for subject_label in subjects_to_analyze:
         t1ws = [f.path for f in layout.get(subject=subject_label,
-                                               session=session_to_analyze,
+                                               **session_to_analyze,
                                                suffix='T1w',
                                                extensions=["nii.gz", "nii"])]
         t2ws = [f.path for f in layout.get(subject=subject_label,
-                                               session=session_to_analyze,
+                                               **session_to_analyze,
                                                suffix='T2w',
                                                extensions=["nii.gz", "nii"])]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
@@ -365,7 +365,7 @@ if args.analysis_level == "participant":
                 stage_func()
 
         bolds = [f.path for f in layout.get(subject=subject_label,
-                                                session=session_to_analyze,
+                                                **session_to_analyze,
                                                 suffix='bold',
                                                 extensions=["nii.gz", "nii"])]
         for fmritcs in bolds:
