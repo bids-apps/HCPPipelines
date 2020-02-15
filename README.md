@@ -44,7 +44,7 @@ This App has the following command line arguments:
                   --license_key LICENSE_KEY [-v]
                   bids_dir output_dir {participant}
 
-    HCP Pipeliens BIDS App (T1w, T2w, fMRI)
+    HCP Pipelines BIDS App (T1w, T2w, fMRI)
 
     positional arguments:
       bids_dir              The directory with the input dataset formatted
