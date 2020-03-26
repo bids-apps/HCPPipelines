@@ -1,6 +1,4 @@
 #!/usr/local/miniconda/bin/python
-
-from __future__ import print_function
 import argparse
 import os
 import shutil
@@ -19,7 +17,8 @@ def run(command, env={}, cwd=None):
     merged_env.pop("DEBUG", None)
     print(command)
     process = Popen(command, stdout=PIPE, stderr=subprocess.STDOUT,
-                    shell=True, env=merged_env, cwd=cwd)
+                    shell=True, env=merged_env, cwd=cwd,
+                    universal_newlines=True)
     while True:
         line = process.stdout.readline()
         print(line)
@@ -188,7 +187,7 @@ parser.add_argument('--participant_label', help='The label of the participant th
 parser.add_argument('--session_label', help='The label of the session that should be analyzed. The label '
                    'corresponds to ses-<session_label> from the BIDS spec '
                    '(so it does not include "ses-"). If this parameter is not '
-                   'provided all session should be analyzed. Multiple '
+                   'provided, all sessions should be analyzed. Multiple '
                    'sessions can be specified with a space separated list.',
                    nargs="+")
 parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
@@ -196,13 +195,12 @@ parser.add_argument('--n_cpus', help='Number of CPUs/cores available to use.',
 parser.add_argument('--stages', help='Which stages to run. Space separated list.',
                    nargs="+", choices=['PreFreeSurfer', 'FreeSurfer',
                                        'PostFreeSurfer', 'fMRIVolume',
-                                       'fMRISurface', 'DiffusionPreprocessing'],
+                                       'fMRISurface'],
                    default=['PreFreeSurfer', 'FreeSurfer', 'PostFreeSurfer',
-                            'fMRIVolume', 'fMRISurface',
-                            'DiffusionPreprocessing'])
+                            'fMRIVolume', 'fMRISurface'])
 parser.add_argument('--coreg', help='Coregistration method to use',
                     choices=['MSMSulc', 'FS'], default='MSMSulc')
-parser.add_argument('--gdcoeffs', help='Gradients coefficients file',
+parser.add_argument('--gdcoeffs', help='Path to gradients coefficients file',
                     default="NONE")
 parser.add_argument('--license_key', help='FreeSurfer license key - letters and numbers after "*" in the email you received after registration. To register (for free) visit https://surfer.nmr.mgh.harvard.edu/registration.html',
                     required=True)
@@ -253,10 +251,10 @@ if args.analysis_level == "participant":
         assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
 
         available_resolutions = ["0.7", "0.8", "1"]
-        t1_zooms = nibabel.load(t1ws[0]).get_header().get_zooms()
+        t1_zooms = nibabel.load(t1ws[0]).header.get_zooms()
         t1_res = float(min(t1_zooms[:3]))
         t1_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t1_res))
-        t2_zooms = nibabel.load(t2ws[0]).get_header().get_zooms()
+        t2_zooms = nibabel.load(t2ws[0]).header.get_zooms()
         t2_res = float(min(t2_zooms[:3]))
         t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
 
@@ -360,7 +358,7 @@ if args.analysis_level == "participant":
                                                  n_cpus=args.n_cpus,
                                                  regname=args.coreg))
                        ])
-        for stage, stage_func in struct_stages_dict.iteritems():
+        for stage, stage_func in struct_stages_dict.items():
             if stage in args.stages:
                 stage_func()
 
@@ -401,7 +399,7 @@ if args.analysis_level == "participant":
                 dcmethod = "NONE"
                 biascorrection = "NONE"
 
-            zooms = nibabel.load(fmritcs).get_header().get_zooms()
+            zooms = nibabel.load(fmritcs).header.get_zooms()
             fmrires = float(min(zooms[:3]))
             fmrires = "2" # https://github.com/Washington-University/Pipelines/blob/637b35f73697b77dcb1d529902fc55f431f03af7/fMRISurface/scripts/SubcorticalProcessing.sh#L43
             # While running '/usr/bin/wb_command -cifti-create-dense-timeseries /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION_temp_subject.dtseries.nii -volume /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION.nii.gz /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/ROIs/ROIs.2.nii.gz':
@@ -433,7 +431,7 @@ if args.analysis_level == "participant":
                                                        lowresmesh=lowresmesh,
                                                        regname=args.coreg))
                                 ])
-            for stage, stage_func in func_stages_dict.iteritems():
+            for stage, stage_func in func_stages_dict.items():
                 if stage in args.stages:
                     stage_func()
 
