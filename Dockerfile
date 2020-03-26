@@ -4,6 +4,19 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8"
 
+#adding jessie backport
+#Installing R prerequisites for fix
+
+RUN sh -c 'echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list' && \
+    apt-get -qq update && \
+    apt-get -t jessie-backports -y install r-base r-base-dev mc nano wget
+    
+RUN Rscript -e 'install.packages(c("kernlab","ROCR", "class", "party", "e1071", "randomForest"), dependencies=TRUE,repos="http://cran.cnr.berkeley.edu/")'
+#older version of party is required (I do it this way, becasue otherwise I would need all the dependencies of party which was already installed above)
+RUN wget https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz && \
+	R CMD INSTALL party_1.0-25.tar.gz && \
+	rm party_1.0-25.tar.gz
+	
 # Download FreeSurfer
 RUN apt-get -qq update && \
     apt-get install -yq --no-install-recommends \
@@ -62,12 +75,36 @@ RUN apt-get update -qq \
        libxt6 \
        unzip \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && echo "Downloading MATLAB Compiler Runtime ..." \
-    && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
-    && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
-    && /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes \
-    && rm -rf /tmp/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
+    
+    
+#    \
+#    && echo "Downloading MATLAB Compiler Runtime ..." \
+#    && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
+#    && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
+#    && /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes \
+#    && rm -rf /tmp/*
+    
+# Install MCR 2016b
+#ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" 
+#ENV MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91"
+#ENV LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+
+
+
+  ##download and install fix
+RUN wget http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz -O fix.tar.gz && \
+	cd /opt/ && \
+	tar zxvf /fix.tar.gz && \
+    mv /opt/fix* /opt/fix && \
+    rm /fix.tar.gz && \
+    cd /opt/fix && \
+    cd /
+
+
+##environmnetal variables mode=0 means MATLAB compiled version , mode=2 would mean Octave   
+ENV FSL_FIX_MATLAB_MODE=0
+ENV FSL_FIXDIR=/opt/fix		
 
 # Install miniconda2
 # still need python 2 for gradunwarp
@@ -167,11 +204,37 @@ ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
 
 
 # overwrite matlab mcr shared object
-RUN rm /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6 && \
-    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6
+#RUN rm /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6 && \
+#    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6
+    
+RUN ln -s $FSLDIR /usr/local/fsl
+RUN mkdir -p /vols/Data/HCP && \
+	cd /vols/Data/HCP && \
+	wget https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.2.3.zip && \
+	unzip workbench-linux64-v1.2.3.zip && \
+	cd /	    
 
 
 
+#try MALTAB already compiled
+RUN cd $FSL_FIXDIR/compiled/Linux/x86_64 && \
+	cp MCRInstaller.zip /tmp && \
+	 cd /tmp && \
+	 unzip MCRInstaller.zip && \ 
+	 ./install -mode silent -agreeToLicense yes
+
+COPY settings.sh /opt/fix/settings.sh
+RUN chmod +x /opt/fix/settings.sh
+RUN mv /opt/fix/hcp_fix /opt/fix/hcp_fix.old
+COPY hcp_fix /opt/fix/hcp_fix
+RUN chmod +x /opt/fix/hcp_fix
+
+RUN wget http://argyelan.com/ZHH/ZHH30_hp2000.RData && \
+    mv ZHH30_hp2000.RData /opt/fix/training_files/ZHH30_hp2000.RData
+COPY zhh_fix /opt/fix/zhh_fix
+RUN chmod +x /opt/fix/zhh_fix
+
+#COPY MCR.version /opt/fix/MCR.version
 COPY run.py version /
 RUN chmod +x /run.py
 
