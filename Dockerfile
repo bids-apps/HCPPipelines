@@ -162,8 +162,8 @@ ENV MATLABCMD="/opt/matlabmcr-2017b/v93/toolbox/matlab" \
     LD_LIBRARY_PATH="/opt/matlabmcr-2017b/v93/runtime/glnxa64:/opt/matlabmcr-2017b/v93/bin/glnxa64:/opt/matlabmcr-2017b/v93/sys/os/glnxa64:$LD_LIBRARY_PATH"
 
 # overwrite matlab mcr shared object
-# RUN rm /opt/matlabmcr-2017b/v91/sys/os/glnxa64/libstdc++.so.6 && \
-#     ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2017b/v91/sys/os/glnxa64/libstdc++.so.6
+RUN rm /opt/matlabmcr-2017b/v93/sys/os/glnxa64/libstdc++.so.6 && \
+    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2017b/v93/sys/os/glnxa64/libstdc++.so.6
 
 
 
