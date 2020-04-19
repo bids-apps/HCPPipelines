@@ -58,37 +58,43 @@ This App has the following command line arguments:
 	                        (in parallel) using the same output_dir.
 	
 	optional arguments:
-	  -h, --help            show this help message and exit
-	  --participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]
-	                        The label of the participant that should be analyzed.
-	                        The label corresponds to sub-<participant_label> from
-	                        the BIDS spec (so it does not include "sub-"). If this
-	                        parameter is not provided all subjects should be
-	                        analyzed. Multiple participants can be specified with
-	                        a space separated list.
-	  --session_label SESSION_LABEL [SESSION_LABEL ...]
-	                        The label of the session that should be analyzed. The
-	                        label corresponds to ses-<session_label> from the BIDS
-	                        spec (so it does not include "ses-"). If this
-	                        parameter is not provided, all sessions should be
-	                        analyzed. Multiple sessions can be specified with a
-	                        space separated list.
-	  --n_cpus N_CPUS       Number of CPUs/cores available to use.
-	  --stages {PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface} [{PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface} ...]
-	                        Which stages to run. Space separated list.
-	  --coreg {MSMSulc,FS}  Coregistration method to use
-	  --gdcoeffs GDCOEFFS   Path to gradients coefficients file
-	  --license_key LICENSE_KEY
-	                        FreeSurfer license key - letters and numbers after "*"
-	                        in the email you received after registration. To
-	                        register (for free) visit
-	                        https://surfer.nmr.mgh.harvard.edu/registration.html
-	  -v, --version         show program's version number and exit
-	  --anat_unwarpdir {x,y,z,-x,-y,-z}
-	                        Unwarp direction for 3D volumes
-	  --skip_bids_validation, --skip-bids-validation
-	                        assume the input dataset is BIDS compliant and skip
-	                        the validation
+	-h, --help            show this help message and exit
+	--participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]
+							The label of the participant that should be analyzed.
+							The label corresponds to sub-<participant_label> from
+							the BIDS spec (so it does not include "sub-"). If this
+							parameter is not provided all subjects should be
+							analyzed. Multiple participants can be specified with
+							a space separated list.
+	--session_label SESSION_LABEL [SESSION_LABEL ...]
+							The label of the session that should be analyzed. The
+							label corresponds to ses-<session_label> from the BIDS
+							spec (so it does not include "ses-"). If this
+							parameter is not provided, all sessions should be
+							analyzed. Multiple sessions can be specified with a
+							space separated list.
+	--n_cpus N_CPUS       Number of CPUs/cores available to use.
+	--stages {PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface} [{PreFreeSurfer,FreeSurfer,PostFreeSurfer,fMRIVolume,fMRISurface} ...]
+							Which stages to run. Space separated list.
+	--coreg {MSMSulc,FS}  Coregistration method to use
+	--gdcoeffs GDCOEFFS   Path to gradients coefficients file
+	--license_key LICENSE_KEY
+							FreeSurfer license key - letters and numbers after "*"
+							in the email you received after registration. To
+							register (for free) visit
+							https://surfer.nmr.mgh.harvard.edu/registration.html
+	-v, --version         show program's version number and exit
+	--anat_unwarpdir {x,y,z,x-,y-,z-}
+							Unwarp direction for 3D volumes
+	--skip_bids_validation, --skip-bids-validation
+							assume the input dataset is BIDS compliant and skip
+							the validation
+	--processing_mode {hcp,legacy,auto}, --processing-mode {hcp,legacy,auto}
+							Control HCP-Pipeline modehcp (HCPStyleData): require
+							T2w and fieldmap modalitieslegacy (LegacyStyleData):
+							always ignore T2w and fieldmapsauto: use T2w and/or
+							fieldmaps if available
+	--doslicetime         Apply slice timing correction as part of fMRIVolume.
 
 To run it in participant level mode (for one participant):
 

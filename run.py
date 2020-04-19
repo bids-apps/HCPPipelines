@@ -10,6 +10,8 @@ import subprocess
 from bids.layout import BIDSLayout
 from functools import partial
 from collections import OrderedDict
+from pathlib import Path
+import numpy as np
 
 def run(command, env={}, cwd=None):
     merged_env = os.environ
@@ -21,7 +23,7 @@ def run(command, env={}, cwd=None):
                     universal_newlines=True)
     while True:
         line = process.stdout.readline()
-        print(line)
+        print(line.rstrip())
         line = str(line)[:-1]
         if line == '' and process.poll() != None:
             break
@@ -34,7 +36,11 @@ lowresmesh = 32
 def run_pre_freesurfer(**args):
     args.update(os.environ)
     args["t1"] = "@".join(t1ws)
-    args["t2"] = "@".join(t2ws)
+    if t2ws != "NONE":
+        args["t2"] = "@".join(t2ws)
+    else:
+        args["t2"] = "NONE"
+        args["t2_template_res"] = args["t1_template_res"]
 
     cmd = '{HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh ' + \
     '--path="{path}" ' + \
@@ -47,6 +53,7 @@ def run_pre_freesurfer(**args):
     '--t2template="{HCPPIPEDIR_Templates}/MNI152_T2_{t2_template_res}mm.nii.gz" ' + \
     '--t2templatebrain="{HCPPIPEDIR_Templates}/MNI152_T2_{t2_template_res}mm_brain.nii.gz" ' + \
     '--t2template2mm="{HCPPIPEDIR_Templates}/MNI152_T2_2mm.nii.gz" ' + \
+    '--t2samplespacing="{t2samplespacing}" ' + \
     '--templatemask="{HCPPIPEDIR_Templates}/MNI152_T1_{t1_template_res}mm_brain_mask.nii.gz" ' + \
     '--template2mmmask="{HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil.nii.gz" ' + \
     '--brainsize="150" ' + \
@@ -60,11 +67,11 @@ def run_pre_freesurfer(**args):
     '--seechospacing="{echospacing}" ' + \
     '--seunwarpdir="{seunwarpdir}" ' + \
     '--t1samplespacing="{t1samplespacing}" ' + \
-    '--t2samplespacing="{t2samplespacing}" ' + \
     '--unwarpdir="{unwarpdir}" ' + \
     '--gdcoeffs={gdcoeffs} ' + \
     '--avgrdcmethod={avgrdcmethod} ' + \
     '--topupconfig="{HCPPIPEDIR_Config}/b02b0.cnf" ' + \
+    '--processing-mode="{processing_mode}" ' + \
     '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -77,7 +84,9 @@ def run_freesurfer(**args):
       '--subjectDIR="{subjectDIR}" ' + \
       '--t1="{path}/{subject}/T1w/T1w_acpc_dc_restore.nii.gz" ' + \
       '--t1brain="{path}/{subject}/T1w/T1w_acpc_dc_restore_brain.nii.gz" ' + \
-      '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" '
+      '--processing-mode="{processing_mode}" '
+    if args["processing_mode"] != "LegacyStyleData":
+        cmd = cmd + '--t2="{path}/{subject}/T1w/T2w_acpc_dc_restore.nii.gz" '
     cmd = cmd.format(**args)
 
     if not os.path.exists(os.path.join(args["subjectDIR"], "fsaverage")):
@@ -107,6 +116,7 @@ def run_post_freesurfer(**args):
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
       '--regname="{regname}" ' + \
+      '--processing-mode="{processing_mode}" ' + \
       '--printcom=""'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
@@ -133,7 +143,11 @@ def run_generic_fMRI_volume_processsing(**args):
       '--topupconfig={HCPPIPEDIR_Config}/b02b0.cnf ' + \
       '--printcom="" ' + \
       '--biascorrection={biascorrection} ' + \
-      '--mctype="MCFLIRT"'
+      '--mctype="MCFLIRT" ' + \
+      '--processing-mode="{processing_mode}" ' + \
+      '--doslicetime="{doslicetime}" ' + \
+      '--slicetimerparams="{slicetimerparams}" '
+
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -147,7 +161,7 @@ def run_generic_fMRI_surface_processsing(**args):
       '--fmrires={fmrires:s} ' + \
       '--smoothingFWHM={fmrires:s} ' + \
       '--grayordinatesres="{grayordinatesres:s}" ' + \
-      '--regname="{regname}"'
+      '--regname="{regname}" '
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -207,12 +221,21 @@ parser.add_argument('--license_key', help='FreeSurfer license key - letters and 
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 parser.add_argument('--anat_unwarpdir', help='Unwarp direction for 3D volumes',
-                    choices=['x', 'y', 'z', '-x', '-y', '-z'], default="NONE")
+                    choices=['x', 'y', 'z', 'x-', 'y-', 'z-'], default="NONE")
 parser.add_argument('--skip_bids_validation', '--skip-bids-validation', action='store_true',
                     default=False,
                     help='assume the input dataset is BIDS compliant and skip the validation')
+parser.add_argument('--processing_mode', '--processing-mode',
+                    choices=['hcp', 'legacy', 'auto'], default='hcp',
+                    help='Control HCP-Pipeline mode'
+                         'hcp (HCPStyleData): require T2w and fieldmap modalities'
+                         'legacy (LegacyStyleData): always ignore T2w and fieldmaps'
+                         'auto: use T2w and/or fieldmaps if available')
+parser.add_argument('--doslicetime', help="Apply slice timing correction as part of fMRIVolume.",
+                    action='store_true', default=False)  
 
 args = parser.parse_args()
+
 
 if (args.gdcoeffs != 'NONE') and ('PreFreeSurfer' in args.stages) and (args.anat_unwarpdir == "NONE"):
     raise AssertionError('--anat_unwarpdir must be specified to use PreFreeSurfer distortion correction')
@@ -243,21 +266,35 @@ if args.analysis_level == "participant":
                                                suffix='T1w',
                                                extensions=["nii.gz", "nii"],
                                                **session_to_analyze)]
-        t2ws = [f.path for f in layout.get(subject=subject_label,
-                                               suffix='T2w',
-                                               extensions=["nii.gz", "nii"],
-                                               **session_to_analyze)]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
-        assert (len(t2ws) > 0), "No T2w files found for subject %s!"%subject_label
-
+        
         available_resolutions = ["0.7", "0.8", "1"]
         t1_zooms = nibabel.load(t1ws[0]).header.get_zooms()
         t1_res = float(min(t1_zooms[:3]))
         t1_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t1_res))
-        t2_zooms = nibabel.load(t2ws[0]).header.get_zooms()
-        t2_res = float(min(t2_zooms[:3]))
-        t2_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t2_res))
+        t1_spacing = layout.get_metadata(t1ws[0])["DwellTime"]
+        
+        t2ws = [f.path for f in layout.get(subject=subject_label,
+                            suffix='T2w',
+                            extensions=["nii.gz", "nii"],
+                            **session_to_analyze)]
+        if (len(t2ws) > 0) and ( args.processing_mode != 'legacy'):
+            t2_zooms = nibabel.load(t2ws[0]).header.get_zooms()
+            t2_res = float(min(t2_zooms[:3]))
+            t2_template_res = min(available_resolutions, key=lambda x: abs(float(x) - t2_res))
+            t2_spacing = layout.get_metadata(t2ws[0])["DwellTime"]
+            anat_processing_mode = "HCPStyleData"
 
+        else:
+            assert (args.processing_mode != 'hcp'), \
+                f"No T2w files found for sub-{subject_label}. Consider --procesing_mode [legacy | auto ]."
+            
+            t2ws = "NONE"
+            t2_template_res = "NONE"
+            t2_spacing = "NONE"
+            anat_processing_mode = "LegacyStyleData"
+
+        # parse fieldmaps for structural processing
         fieldmap_set = layout.get_fieldmap(t1ws[0], return_list=True)
         fmap_args = {"fmapmag": "NONE",
                      "fmapphase": "NONE",
@@ -271,9 +308,7 @@ if args.analysis_level == "participant":
                      "echospacing": "NONE",
                      "seunwarpdir": "NONE"}
 
-        if fieldmap_set:
-            t1_spacing = layout.get_metadata(t1ws[0])["DwellTime"]
-            t2_spacing = layout.get_metadata(t2ws[0])["DwellTime"]
+        if fieldmap_set and ( args.processing_mode != 'legacy' ):
 
             # use an unwarpdir specified on the command line
             # this is different from the SE direction
@@ -345,21 +380,25 @@ if args.analysis_level == "participant":
                                                 t1_template_res=t1_template_res,
                                                 t2_template_res=t2_template_res,
                                                 gdcoeffs=args.gdcoeffs,
+                                                processing_mode=anat_processing_mode,
                                                 **fmap_args)),
                        ("FreeSurfer", partial(run_freesurfer,
                                              path=args.output_dir,
                                              subject="sub-%s"%subject_label,
-                                             n_cpus=args.n_cpus)),
+                                             n_cpus=args.n_cpus,
+                                             processing_mode=anat_processing_mode)),
                        ("PostFreeSurfer", partial(run_post_freesurfer,
                                                  path=args.output_dir,
                                                  subject="sub-%s"%subject_label,
                                                  grayordinatesres=grayordinatesres,
                                                  lowresmesh=lowresmesh,
                                                  n_cpus=args.n_cpus,
-                                                 regname=args.coreg))
+                                                 regname=args.coreg,
+                                                 processing_mode=anat_processing_mode))
                        ])
         for stage, stage_func in struct_stages_dict.items():
             if stage in args.stages:
+                print(f'{stage} in {anat_processing_mode} mode')
                 stage_func()
 
         bolds = [f.path for f in layout.get(subject=subject_label,
@@ -375,7 +414,7 @@ if args.analysis_level == "participant":
                 fmriscout = "NONE"
 
             fieldmap_set = layout.get_fieldmap(fmritcs, return_list=True)
-            if fieldmap_set and len(fieldmap_set) == 2 and all(item["suffix"] == "epi" for item in fieldmap_set):
+            if fieldmap_set and len(fieldmap_set) == 2 and all(item["suffix"] == "epi" for item in fieldmap_set) and ( args.processing_mode != 'legacy' ):
                 SEPhaseNeg = None
                 SEPhasePos = None
                 for fieldmap in fieldmap_set:
@@ -391,13 +430,18 @@ if args.analysis_level == "participant":
                     unwarpdir = "-" + unwarpdir[0]
                 dcmethod = "TOPUP"
                 biascorrection = "SEBASED"
+                func_processing_mode = "HCPStyleData"
             else:
+                assert (args.processing_mode != 'hcp'), \
+                    f"No fieldmaps found for BOLD {fmritcs}. Consider --procesing_mode [legacy | auto ]."
+            
                 SEPhaseNeg = "NONE"
                 SEPhasePos = "NONE"
                 echospacing = "NONE"
                 unwarpdir = "NONE"
                 dcmethod = "NONE"
                 biascorrection = "NONE"
+                func_processing_mode = "LegacyStyleData"
 
             zooms = nibabel.load(fmritcs).header.get_zooms()
             fmrires = float(min(zooms[:3]))
@@ -405,6 +449,37 @@ if args.analysis_level == "participant":
             # While running '/usr/bin/wb_command -cifti-create-dense-timeseries /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION_temp_subject.dtseries.nii -volume /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/Results/EMOTION/EMOTION.nii.gz /scratch/users/chrisgor/hcp_output2/sub-100307/MNINonLinear/ROIs/ROIs.2.nii.gz':
             # ERROR: label volume has a different volume space than data volume
 
+            # optional slice timing
+            doslicetime = "FALSE"
+            slicetimerparams = ""
+            if args.doslicetime:
+                doslicetime = "TRUE"
+                func_processing_mode = "LegacyStyleData"
+                try:
+                    slicetiming = layout.get_metadata(fmritcs)["SliceTiming"]
+                    tr = layout.get_metadata(fmritcs)["RepetitionTime"]
+                except KeyError:
+                    print(f"SliceTiming metadata is required for slice timing correction of {fmritcs}")
+
+                try:
+                    slicedirection = layout.get_metadata(fmritcs)["SliceEncodingDirection"]
+                    if '-' in slicedirection:
+                        slicetiming.reverse()
+                except KeyError:
+                    pass
+                
+                # shift timing to the median slice, assuming equally spaced slices
+                slicedelta = np.diff(np.sort(slicetiming))
+                slicedelta = np.mean(slicedelta[slicedelta > 0])
+                slicetiming = slicetiming / (np.max(slicetiming) + slicedelta)
+                slicetiming = -(slicetiming - np.median(slicetiming))
+
+                tmpdir = f"{args.output_dir}/tmp/{subject_label}"
+                Path(tmpdir).mkdir(parents=True, exist_ok=True)
+                with open(f"{tmpdir}/{fmriname}_st.txt", "w") as fp:
+                    fp.writelines("%f\n" % t for t in slicetiming)
+
+                slicetimerparams = f"--repeat={tr}@--tcustom={tmpdir}/{fmriname}_st.txt"
 
             func_stages_dict = OrderedDict([("fMRIVolume", partial(run_generic_fMRI_volume_processsing,
                                                       path=args.output_dir,
@@ -420,7 +495,10 @@ if args.analysis_level == "participant":
                                                       dcmethod=dcmethod,
                                                       biascorrection=biascorrection,
                                                       n_cpus=args.n_cpus,
-                                                      gdcoeffs=args.gdcoeffs)),
+                                                      gdcoeffs=args.gdcoeffs,
+                                                      doslicetime=doslicetime,
+                                                      slicetimerparams=slicetimerparams,
+                                                      processing_mode=func_processing_mode)),
                                 ("fMRISurface", partial(run_generic_fMRI_surface_processsing,
                                                        path=args.output_dir,
                                                        subject="sub-%s"%subject_label,
@@ -433,6 +511,7 @@ if args.analysis_level == "participant":
                                 ])
             for stage, stage_func in func_stages_dict.items():
                 if stage in args.stages:
+                    print(f"Processing {fmritcs} in {func_processing_mode} mode.")
                     stage_func()
 
         dwis = layout.get(subject=subject_label, suffix='dwi',
