@@ -24,7 +24,7 @@ Among other things, these tools implement the Minimal Preprocessing Pipeline
 ### How to report errors
 Discussion of HCP Pipeline usage and improvements can be posted to the
 hcp-users discussion list. Sign up for hcp-users at
-[http://humanconnectome.org/contact/#subscribe][hcp-users-subscribe]
+[http://humanconnectome.org/contact/#subscribe][hcp-users-subscribe].
 
 Please open an issue if you encounter errors building this BIDS App or believe you have encountered an error specific to the BIDS App wrapper.
 
