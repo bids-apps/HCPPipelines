@@ -84,7 +84,7 @@ RUN curl -fsSL -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py
 WORKDIR /opt
 RUN apt-get -qq update && \
     apt-get install -yq libfreetype6 libglib2.0 && \
-    wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.2.zip -O wb.zip \
+    wget -q https://github.com/Washington-University/workbench/archive/refs/tags/v1.5.0..zip -O wb.zip \
     && unzip wb.zip \
     && rm wb.zip && \
     apt-get clean && \
@@ -95,7 +95,7 @@ ENV CARET7DIR="/opt/workbench/bin_linux64"
 RUN apt-get -qq update && \
     apt-get install -yq --no-install-recommends gcc g++ libglu1 && \
     rm -rf /tmp/* && \
-    wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.1.3.tar.gz | tar xz -C /tmp && \
+    wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.3.0.tar.gz | tar xz -C /tmp && \
     mv /tmp/* /opt/HCP-Pipelines && \
     mkdir /opt/HCP-Pipelines/MSMBinaries && \
     wget -q https://github.com/ecr05/MSM_HOCR/releases/download/v3.0FSL/msm_ubuntu_v3 -O /opt/HCP-Pipelines/MSMBinaries/msm &&  \
@@ -126,7 +126,7 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
 RUN wget -qO- https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get update && \
     apt-get install -y --no-install-recommends nodejs && \
-    npm install -g bids-validator@1.4.4 && \
+    npm install -g bids-validator@1.7.2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
