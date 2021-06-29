@@ -84,7 +84,7 @@ RUN curl -fsSL -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py
 WORKDIR /opt
 RUN apt-get -qq update && \
     apt-get install -yq libfreetype6 libglib2.0 && \
-    wget -q https://github.com/Washington-University/workbench/archive/refs/tags/v1.5.0..zip -O wb.zip \
+    wget -q https://github.com/Washington-University/workbench/archive/refs/tags/v1.5.0.zip -O wb.zip \
     && unzip wb.zip \
     && rm wb.zip && \
     apt-get clean && \
