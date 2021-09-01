@@ -116,8 +116,7 @@ def run_post_freesurfer(**args):
       '--freesurferlabels="{HCPPIPEDIR_Config}/FreeSurferAllLut.txt" ' + \
       '--refmyelinmaps="{HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii" ' + \
       '--regname="{regname}" ' + \
-      '--processing-mode="{processing_mode}" ' + \
-      '--printcom=""'
+      '--processing-mode="{processing_mode}"'
     cmd = cmd.format(**args)
     run(cmd, cwd=args["path"], env={"OMP_NUM_THREADS": str(args["n_cpus"])})
 
@@ -221,7 +220,7 @@ parser.add_argument('--license_key', help='FreeSurfer license key - letters and 
 parser.add_argument('-v', '--version', action='version',
                     version='HCP Pipelines BIDS App version {}'.format(__version__))
 parser.add_argument('--anat_unwarpdir', help='Unwarp direction for 3D volumes',
-                    choices=['x', 'y', 'z', 'x-', 'y-', 'z-'], default="NONE")
+                    choices=['x', 'y', 'z', 'x-', 'y-', 'z-', 'NONE'], default="z")
 parser.add_argument('--skip_bids_validation', '--skip-bids-validation', action='store_true',
                     default=False,
                     help='assume the input dataset is BIDS compliant and skip the validation')
