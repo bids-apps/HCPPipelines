@@ -90,6 +90,7 @@ RUN apt-get -qq update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ENV CARET7DIR="/opt/workbench/bin_linux64"
+ENV PATH="${CARET7DIR}:${PATH}"
 
 # Install HCP Pipelines and MSM binaries
 RUN apt-get -qq update && \
