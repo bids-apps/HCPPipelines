@@ -29,9 +29,11 @@ hcp-users discussion list. Sign up for hcp-users at
 Please open an issue if you encounter errors building this BIDS App or believe you have encountered an error specific to the BIDS App wrapper.
 
 ### Acknowledgements
+
 Please cite [Glasser et al. 2013][GlasserEtAl] and [Smith et al. 2013][SmithEtAl].
 
 ### Usage
+
 This App has the following command line arguments:
 
 	usage: run.py [-h]
