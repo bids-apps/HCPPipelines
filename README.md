@@ -45,9 +45,9 @@ This App has the following command line arguments:
 	              LICENSE_KEY [-v] [--anat_unwarpdir {x,y,z,-x,-y,-z}]
 	              [--skip_bids_validation]
 	              bids_dir output_dir {participant}
-	
+
 	HCP Pipelines BIDS App (T1w, T2w, fMRI)
-	
+
 	positional arguments:
 	  bids_dir              The directory with the input dataset formatted
 	                        according to the BIDS standard.
@@ -58,7 +58,7 @@ This App has the following command line arguments:
 	  {participant}         Level of the analysis that will be performed. Multiple
 	                        participant level analyses can be run independently
 	                        (in parallel) using the same output_dir.
-	
+
 	optional arguments:
 	-h, --help            show this help message and exit
 	--participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]

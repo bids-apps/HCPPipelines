@@ -231,7 +231,7 @@ parser.add_argument('--processing_mode', '--processing-mode',
                          'legacy (LegacyStyleData): always ignore T2w and fieldmaps'
                          'auto: use T2w and/or fieldmaps if available')
 parser.add_argument('--doslicetime', help="Apply slice timing correction as part of fMRIVolume.",
-                    action='store_true', default=False)  
+                    action='store_true', default=False)
 
 args = parser.parse_args()
 
@@ -266,13 +266,13 @@ if args.analysis_level == "participant":
                                                extensions=["nii.gz", "nii"],
                                                **session_to_analyze)]
         assert (len(t1ws) > 0), "No T1w files found for subject %s!"%subject_label
-        
+
         available_resolutions = ["0.7", "0.8", "1"]
         t1_zooms = nibabel.load(t1ws[0]).header.get_zooms()
         t1_res = float(min(t1_zooms[:3]))
         t1_template_res = min(available_resolutions, key=lambda x:abs(float(x)-t1_res))
         t1_spacing = layout.get_metadata(t1ws[0])["DwellTime"]
-        
+
         t2ws = [f.path for f in layout.get(subject=subject_label,
                             suffix='T2w',
                             extensions=["nii.gz", "nii"],
@@ -287,7 +287,7 @@ if args.analysis_level == "participant":
         else:
             assert (args.processing_mode != 'hcp'), \
                 f"No T2w files found for sub-{subject_label}. Consider --procesing_mode [legacy | auto ]."
-            
+
             t2ws = "NONE"
             t2_template_res = "NONE"
             t2_spacing = "NONE"
@@ -433,7 +433,7 @@ if args.analysis_level == "participant":
             else:
                 assert (args.processing_mode != 'hcp'), \
                     f"No fieldmaps found for BOLD {fmritcs}. Consider --procesing_mode [legacy | auto ]."
-            
+
                 SEPhaseNeg = "NONE"
                 SEPhasePos = "NONE"
                 echospacing = "NONE"
@@ -466,7 +466,7 @@ if args.analysis_level == "participant":
                         slicetiming.reverse()
                 except KeyError:
                     pass
-                
+
                 # shift timing to the median slice, assuming equally spaced slices
                 slicedelta = np.diff(np.sort(slicetiming))
                 slicedelta = np.mean(slicedelta[slicedelta > 0])
