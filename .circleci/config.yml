@@ -1,43 +1,113 @@
 ---
-general:
-  artifacts:
-  - ~/outputs1
-machine:
-  services:
-  - docker   #don't use 1.10 - caching is broken
+version: 2.1
 
-dependencies:
-  cache_directories:
-  - ~/docker
-  - ~/data
+jobs:
+  build:
+    machine:
+      # https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
 
-  override:
-  - if [[ ! -d ~/data/hcp_example_bids_v3 ]]; then wget -c -O ${HOME}/hcp_example_bids.zip "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/5a8efffe91b689000c9f5ce5"
-    && mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data; fi
-  - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-  - git describe --tags > version
-  - docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} .:
-      timeout: 40000
-  - mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
-  - mkdir -p ${HOME}/outputs
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - my_cache
 
-test:
-  override:
-    # print version
-  - docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset bids/${CIRCLE_PROJECT_REPONAME,,}
-    --version
-    # participant level tests for single session dataset
-  - ? docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,}
-      /bids_dataset /outputs participant --participant_label 100307 --stages PreFreeSurfer --license_key="*CxjskRdd7" --n_cpus 2
-    : timeout: 21600
-deployment:
-  hub:
-    owner: BIDS-Apps
-    tag: /.*/
-    commands:
-    - ? if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push bids/${CIRCLE_PROJECT_REPONAME,,}:latest;
-        fi
-      : timeout: 21600
-    - ? if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag bids/${CIRCLE_PROJECT_REPONAME,,} bids/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG
-        && docker push bids/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG; fi
-      : timeout: 21600
+    - run:
+        name: Get test data
+        command: |
+          if [[ ! -d ~/data/hcp_example_bids_v3 ]]; then
+            wget -c -O ${HOME}/hcp_example_bids.zip "https://osf.io/download/6429f/"
+            mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data;
+          fi
+    - run:
+        name: Build Docker image
+        command: |
+          if [[ -e ~/docker/image.tar ]]; \
+            then docker load -i ~/docker/image.tar;
+          fi
+          git describe --tags --always > version
+          docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} .
+          mkdir -p ${HOME}/docker
+          docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
+
+    - save_cache:
+        key: my_cache
+        paths:
+        - ~/docker
+        - ~/data
+
+    - persist_to_workspace:
+        root: ~/docker
+        paths:
+        - image.tar
+
+  test:
+    machine:
+      image: ubuntu-2204:2022.10.2
+
+    steps:
+    - attach_workspace:
+        at: /tmp/workspace
+    - run: docker load -i /tmp/workspace/image.tar
+
+    - run: mkdir -p ${HOME}/outputs
+
+    - run:
+        name: print version
+        command: |
+          docker run -ti --rm --read-only \
+            -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+              bids/${CIRCLE_PROJECT_REPONAME,,} --version
+
+    - run:
+        name: participant level tests for single session dataset
+        command: |
+          docker run -ti --rm --read-only \
+            -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+              bids/${CIRCLE_PROJECT_REPONAME,,} \
+                /bids_dataset \
+                /outputs \
+                participant --participant_label 100307 \
+                --stages PreFreeSurfer \
+                --license_key="*CxjskRdd7" \
+                --n_cpus 2
+        no_output_timeout: 6h
+
+  deploy:
+    machine:
+      image: ubuntu-2204:2022.10.2
+
+    steps:
+    - attach_workspace:
+        at: /tmp/workspace
+
+    - run: docker load -i /tmp/workspace/docker/image.tar
+    - run:
+        name: push to dockerhub
+        command: |
+          docker login --username ${DOCKER_USER} --password ${DOCKER_PASS}
+          docker push bids/${CIRCLE_PROJECT_REPONAME,,}:latest
+          if [[ -n "${CIRCLE_TAG}" ]]; then
+            docker tag bids/${CIRCLE_PROJECT_REPONAME,,} bids/${CIRCLE_PROJECT_REPONAME,,}:${CIRCLE_TAG}
+            docker push bids/${CIRCLE_PROJECT_REPONAME,,}:${CIRCLE_TAG}
+          fi
+
+workflows:
+  build-test-deploy:
+    jobs:
+    - build
+    - test:
+        requires:
+        - build
+        matrix:
+          parameters:
+            dataset: ['01', '02']
+    - deploy:
+        requires:
+        - test
+        filters:
+          tags:
+            only: /.*/
+
+# VS Code Extension Version: 1.5.1
