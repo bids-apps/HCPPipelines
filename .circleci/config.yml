@@ -100,9 +100,6 @@ workflows:
     - test:
         requires:
         - build
-        matrix:
-          parameters:
-            dataset: ['01', '02']
     - deploy:
         requires:
         - test
