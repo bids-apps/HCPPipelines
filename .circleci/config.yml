@@ -6,13 +6,11 @@ jobs:
     machine:
       # https://circleci.com/developer/machine/image/ubuntu-2204
       image: ubuntu-2204:2022.10.2
-
     steps:
     - checkout
     - restore_cache:
         keys:
         - my_cache
-
     - run:
         name: Get test data
         command: |
@@ -23,43 +21,34 @@ jobs:
     - run:
         name: Build Docker image
         command: |
-          if [[ -e ~/docker/image.tar ]]; \
-            then docker load -i ~/docker/image.tar;
-          fi
-          git describe --tags --always > version
-          docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} .
-          mkdir -p ${HOME}/docker
-          docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
-
+          wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/build_docker.sh
+          bash build_docker.sh
     - save_cache:
         key: my_cache
         paths:
         - ~/docker
         - ~/data
-
+        - ~/data
     - persist_to_workspace:
-        root: ~/docker
+        root: /home/circleci
         paths:
-        - image.tar
+        - data/hcp_example_bids_v3
+        - docker/image.tar
 
   test:
     machine:
       image: ubuntu-2204:2022.10.2
-
     steps:
     - attach_workspace:
         at: /tmp/workspace
     - run: docker load -i /tmp/workspace/image.tar
-
     - run: mkdir -p ${HOME}/outputs
-
     - run:
         name: print version
         command: |
           docker run -ti --rm --read-only \
             -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
               bids/${CIRCLE_PROJECT_REPONAME,,} --version
-
     - run:
         name: participant level tests for single session dataset
         command: |
@@ -77,21 +66,15 @@ jobs:
   deploy:
     machine:
       image: ubuntu-2204:2022.10.2
-
     steps:
     - attach_workspace:
         at: /tmp/workspace
-
     - run: docker load -i /tmp/workspace/docker/image.tar
     - run:
         name: push to dockerhub
         command: |
-          docker login --username ${DOCKER_USER} --password ${DOCKER_PASS}
-          docker push bids/${CIRCLE_PROJECT_REPONAME,,}:latest
-          if [[ -n "${CIRCLE_TAG}" ]]; then
-            docker tag bids/${CIRCLE_PROJECT_REPONAME,,} bids/${CIRCLE_PROJECT_REPONAME,,}:${CIRCLE_TAG}
-            docker push bids/${CIRCLE_PROJECT_REPONAME,,}:${CIRCLE_TAG}
-          fi
+          wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/push_docker.sh
+          bash push_docker.sh  
 
 workflows:
   build-test-deploy:
