@@ -77,7 +77,7 @@ RUN curl -fsSL -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py
     rm miniconda.sh && \
     conda config --add channels conda-forge && \
     conda install -y mkl=2020.0 mkl-service=2.3.0 numpy=1.18.1 nibabel=3.0.2 pandas=1.0.3 && sync && \
-    conda clean -tipsy && sync && \
+    conda clean -tip && sync && \
     /usr/local/miniconda/bin/pip install --no-cache-dir pybids==0.10.2
 
 # Install connectome-workbench
