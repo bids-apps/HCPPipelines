@@ -47,13 +47,13 @@ jobs:
           name: print version
           command: |
             docker run -ti --rm --read-only \
-              -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+              /tmp/workspace/data/hcp_example_bids_v3:/bids_dataset \
                 bids/${CIRCLE_PROJECT_REPONAME,,} --version
       - run:
           name: participant level tests for single session dataset
           command: |
             docker run -ti --rm --read-only \
-              -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+              /tmp/workspace/data/hcp_example_bids_v3:/bids_dataset \
                 bids/${CIRCLE_PROJECT_REPONAME,,} \
                   /bids_dataset \
                   /outputs \
