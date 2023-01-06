@@ -7,87 +7,85 @@ jobs:
       # https://circleci.com/developer/machine/image/ubuntu-2204
       image: ubuntu-2204:2022.10.2
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - my_cache
-    - run:
-        name: Get test data
-        command: |
-          if [[ ! -d ~/data/hcp_example_bids_v3 ]]; then
-            wget -c -O ${HOME}/hcp_example_bids.zip "https://osf.io/download/6429f/"
-            mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data;
-          fi
-    - run:
-        name: Build Docker image
-        command: |
-          wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/build_docker.sh
-          bash build_docker.sh
-    - save_cache:
-        key: my_cache
-        paths:
-        - ~/docker
-        - ~/data
-        - ~/data
-    - persist_to_workspace:
-        root: /home/circleci
-        paths:
-        - data/hcp_example_bids_v3
-        - docker/image.tar
+      - checkout
+      - restore_cache:
+          keys:
+            - my_cache
+      - run:
+          name: Get test data
+          command: |
+            if [[ ! -d ~/data/hcp_example_bids_v3 ]]; then
+              wget -c -O ${HOME}/hcp_example_bids.zip "https://osf.io/download/6429f/"
+              mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data;
+            fi
+      - run:
+          name: Build Docker image
+          command: |
+            wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/build_docker.sh
+            bash build_docker.sh
+      - save_cache:
+          key: my_cache
+          paths:
+            - ~/docker
+            - ~/data
+            - ~/data
+      - persist_to_workspace:
+          root: /home/circleci
+          paths:
+            - data/hcp_example_bids_v3
+            - docker/image.tar
 
   test:
     machine:
       image: ubuntu-2204:2022.10.2
     steps:
-    - attach_workspace:
-        at: /tmp/workspace
-    - run: docker load -i /tmp/workspace/image.tar
-    - run: mkdir -p ${HOME}/outputs
-    - run:
-        name: print version
-        command: |
-          docker run -ti --rm --read-only \
-            -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
-              bids/${CIRCLE_PROJECT_REPONAME,,} --version
-    - run:
-        name: participant level tests for single session dataset
-        command: |
-          docker run -ti --rm --read-only \
-            -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
-              bids/${CIRCLE_PROJECT_REPONAME,,} \
-                /bids_dataset \
-                /outputs \
-                participant --participant_label 100307 \
-                --stages PreFreeSurfer \
-                --license_key="*CxjskRdd7" \
-                --n_cpus 2
-        no_output_timeout: 6h
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: docker load -i /tmp/workspace/image.tar
+      - run: mkdir -p ${HOME}/outputs
+      - run:
+          name: print version
+          command: |
+            docker run -ti --rm --read-only \
+              -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+                bids/${CIRCLE_PROJECT_REPONAME,,} --version
+      - run:
+          name: participant level tests for single session dataset
+          command: |
+            docker run -ti --rm --read-only \
+              -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+                bids/${CIRCLE_PROJECT_REPONAME,,} \
+                  /bids_dataset \
+                  /outputs \
+                  participant --participant_label 100307 \
+                  --stages PreFreeSurfer \
+                  --license_key="*CxjskRdd7" \
+                  --n_cpus 2
+          no_output_timeout: 6h
 
   deploy:
     machine:
       image: ubuntu-2204:2022.10.2
     steps:
-    - attach_workspace:
-        at: /tmp/workspace
-    - run: docker load -i /tmp/workspace/docker/image.tar
-    - run:
-        name: push to dockerhub
-        command: |
-          wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/push_docker.sh
-          bash push_docker.sh  
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: docker load -i /tmp/workspace/docker/image.tar
+      - run:
+          name: push to dockerhub
+          command: |
+            wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/push_docker.sh
+            bash push_docker.sh
 
 workflows:
   build-test-deploy:
     jobs:
-    - build
-    - test:
-        requires:
-        - build
-    - deploy:
-        requires:
-        - test
-        filters:
-          tags:
-            only: /.*/
-
-# VS Code Extension Version: 1.5.1
+      - build
+      - test:
+          requires:
+            - build
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /.*/
