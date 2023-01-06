@@ -14,10 +14,8 @@ jobs:
       - run:
           name: Get test data
           command: |
-            if [[ ! -d ~/data/hcp_example_bids_v3 ]]; then
-              wget -c -O ${HOME}/hcp_example_bids.zip "https://osf.io/download/6429f/"
-              mkdir -p ${HOME}/data && unzip ${HOME}/hcp_example_bids.zip -d ${HOME}/data;
-            fi
+            wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/utils/get_data_from_osf.sh
+            bash get_data_from_osf.sh hcp_example_bids_v3          
       - run:
           name: Build Docker image
           command: |
@@ -89,3 +87,5 @@ workflows:
           filters:
             tags:
               only: /.*/
+
+# VS Code Extension Version: 1.5.1
