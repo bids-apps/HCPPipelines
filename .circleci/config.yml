@@ -39,7 +39,7 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - run: docker load -i /tmp/workspace/image.tar
+      - run: docker load -i /tmp/workspace/docker/image.tar
       - run: mkdir -p ${HOME}/outputs
       - run:
           name: print version
