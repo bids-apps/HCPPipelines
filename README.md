@@ -101,10 +101,10 @@ This App has the following command line arguments:
 To run it in participant level mode (for one participant):
 
     docker run -i --rm \
-    -v /Users/filo/data/ds005:/bids_dataset:ro \
-    -v /Users/filo/outputs:/outputs \
-    bids/hcppipelines \
-    /bids_dataset /outputs participant --participant_label 01 --license_key "XXXXXX"
+		-v /Users/filo/data/ds005:/bids_dataset:ro \
+		-v /Users/filo/outputs:/outputs \
+		bids/hcppipelines \
+			/bids_dataset /outputs participant --participant_label 01 --license_key "XXXXXX"
 
 ### Commercial use
 
