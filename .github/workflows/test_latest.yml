@@ -65,4 +65,3 @@ jobs:
 
     - name: check output
       run: tree ${HOME}/outputs
-
