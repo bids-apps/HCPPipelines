@@ -84,7 +84,7 @@ jobs:
           wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/utils/get_data_from_osf.sh
           bash get_data_from_osf.sh hcp_example_bids_v3
     - run:
-        name: Get test data
+        name: Pull image
         command: docker pull bids/${CIRCLE_PROJECT_REPONAME,,}
     - run:
         name: participant level tests for single session dataset
