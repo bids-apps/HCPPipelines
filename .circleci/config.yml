@@ -96,6 +96,7 @@ jobs:
                 /outputs \
                 participant --participant_label 100307 \
                 --stages PreFreeSurfer \
+                --processing_mode legacy \
                 --license_key="*CxjskRdd7" \
                 --n_cpus 2
 
