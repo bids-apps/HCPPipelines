@@ -74,10 +74,37 @@ jobs:
           wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/circleci/push_docker.sh
           bash push_docker.sh
 
+  test_latest:
+    machine:
+      image: ubuntu-2204:2022.10.2
+    steps:
+    - run:
+        name: Get test data
+        command: |
+          wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/utils/get_data_from_osf.sh
+          bash get_data_from_osf.sh hcp_example_bids_v3
+    - run:
+        name: Pull image
+        command: docker pull bids/${CIRCLE_PROJECT_REPONAME,,}
+    - run:
+        name: participant level tests for single session dataset
+        command: |
+          docker run -ti --rm --read-only \
+            -v ~/data/hcp_example_bids_v3:/bids_dataset \
+              bids/${CIRCLE_PROJECT_REPONAME,,} \
+                /bids_dataset \
+                /outputs \
+                participant --participant_label 100307 \
+                --stages PreFreeSurfer \
+                --processing_mode legacy \
+                --license_key="*CxjskRdd7" \
+                --n_cpus 2
+
 workflows:
   build-test-deploy:
     jobs:
     - build
+    - test_latest
     - test:
         requires:
         - build
