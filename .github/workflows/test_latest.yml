@@ -1,0 +1,67 @@
+---
+name: test latest image
+
+on:
+  push:
+    branches: ['*']
+  schedule:
+  - cron: 0 0 1 * *
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  test_dataset_without_session:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tree
+
+    - name: pull docker image
+      run: docker pull bids/hcppipelines
+
+    - name: print version
+      run: |
+        docker run -t --rm --read-only \
+        --tmpfs /tmp \
+        --tmpfs /var/tmp \
+          bids/hcppipelines --help
+        docker run -t --rm --read-only \
+          --tmpfs /tmp \
+          --tmpfs /var/tmp \
+            bids/hcppipelines --version
+
+    - name: get data
+      run: |
+        wget https://raw.githubusercontent.com/bids-apps/maintenance-tools/main/utils/get_data_from_osf.sh
+        bash get_data_from_osf.sh hcp_example_bids_v3
+
+    - name: prepare output dir
+      run: |
+        mkdir -p ${HOME}/outputs
+
+    - name: participant 01
+      run: |
+        docker run -t --rm --read-only \
+          -v ${HOME}/data/hcp_example_bids_v3:/bids_dataset \
+          -v ${HOME}/outputs:/outputs \
+          --tmpfs /tmp \
+          --tmpfs /var/tmp \
+            bids/hcppipelines \
+              /bids_dataset \
+              /outputs \
+              participant \
+              --participant_label 100307 \
+              --stages PreFreeSurfer \
+              --license_key="*CxjskRdd7" \
+              --n_cpus 2
+
+    - name: check output
+      run: tree ${HOME}/outputs
