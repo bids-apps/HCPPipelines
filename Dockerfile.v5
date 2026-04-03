@@ -36,6 +36,11 @@ RUN apt-get update -qq && \
       libxpm-dev \
       libxt6 \
       libstdc++6 \
+      libssl-dev \
+      libcurl4-openssl-dev \
+      libxml2-dev \
+      libfontconfig1-dev \
+      libfreetype6-dev \
       mc \
       nano \
       perl \
@@ -51,11 +56,16 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # ── R packages for ICA-FIX ───────────────────────────────────────────────────
-RUN Rscript -e 'install.packages(c("kernlab","ROCR","class","e1071","randomForest","signal","R.utils"), \
-      dependencies=TRUE, repos="https://cloud.r-project.org/")' && \
+# Install party 1.0-25 dependencies first, then core ICA-FIX packages
+RUN Rscript -e 'install.packages(c("mvtnorm","modeltools","zoo","sandwich"), \
+      repos="https://cloud.r-project.org/")' && \
+    Rscript -e 'install.packages(c("strucchange","coin"), \
+      repos="https://cloud.r-project.org/")' && \
     wget -q https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz && \
     R CMD INSTALL party_1.0-25.tar.gz && \
-    rm party_1.0-25.tar.gz
+    rm party_1.0-25.tar.gz && \
+    Rscript -e 'install.packages(c("kernlab","ROCR","class","e1071","randomForest","signal","R.utils"), \
+      repos="https://cloud.r-project.org/")'
 
 # ── FreeSurfer 7.3.2 ─────────────────────────────────────────────────────────
 RUN wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz \
