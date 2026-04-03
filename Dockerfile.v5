@@ -71,7 +71,7 @@ RUN Rscript -e 'install.packages(c("mvtnorm","modeltools","zoo","sandwich","stru
 
 # ── FreeSurfer 7.3.2 ─────────────────────────────────────────────────────────
 # Download the tarball first (before building) to avoid stream interruption:
-#   wget -c https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz \
+#   wget -c https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer-linux-ubuntu22_amd64-7.3.2.tar.gz \
 #        -O freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz
 COPY freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz /tmp/freesurfer.tar.gz
 RUN tar zxv -C /opt -f /tmp/freesurfer.tar.gz \
