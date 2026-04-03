@@ -56,11 +56,13 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # ── R packages for ICA-FIX ───────────────────────────────────────────────────
-# Install party 1.0-25 dependencies first, then core ICA-FIX packages
-RUN Rscript -e 'install.packages(c("mvtnorm","modeltools","zoo","sandwich"), \
+# party_1.0-25 requires coin < 1.2 (coin 1.2+ removed ExpectCovar classes)
+# Install pinned versions of coin and party from CRAN archive
+RUN Rscript -e 'install.packages(c("mvtnorm","modeltools","zoo","sandwich","strucchange"), \
       repos="https://cloud.r-project.org/")' && \
-    Rscript -e 'install.packages(c("strucchange","coin"), \
-      repos="https://cloud.r-project.org/")' && \
+    wget -q https://cran.r-project.org/src/contrib/Archive/coin/coin_1.1-3.tar.gz && \
+    R CMD INSTALL coin_1.1-3.tar.gz && \
+    rm coin_1.1-3.tar.gz && \
     wget -q https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz && \
     R CMD INSTALL party_1.0-25.tar.gz && \
     rm party_1.0-25.tar.gz && \
