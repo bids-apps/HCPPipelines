@@ -70,8 +70,11 @@ RUN Rscript -e 'install.packages(c("mvtnorm","modeltools","zoo","sandwich","stru
       repos="https://cloud.r-project.org/")'
 
 # ── FreeSurfer 7.3.2 ─────────────────────────────────────────────────────────
-RUN wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz \
-    | tar zxv -C /opt \
+# Download the tarball first (before building) to avoid stream interruption:
+#   wget -c https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz \
+#        -O freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz
+COPY freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz /tmp/freesurfer.tar.gz
+RUN tar zxv -C /opt -f /tmp/freesurfer.tar.gz \
       --exclude='freesurfer/trctrain' \
       --exclude='freesurfer/subjects/fsaverage_sym' \
       --exclude='freesurfer/subjects/fsaverage3' \
@@ -84,7 +87,8 @@ RUN wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/frees
       --exclude='freesurfer/subjects/V1_average' \
       --exclude='freesurfer/average/mult-comp-cor' \
       --exclude='freesurfer/lib/cuda' \
-      --exclude='freesurfer/lib/qt'
+      --exclude='freesurfer/lib/qt' && \
+    rm /tmp/freesurfer.tar.gz
 
 ENV OS=Linux \
     FS_OVERRIDE=0 \
