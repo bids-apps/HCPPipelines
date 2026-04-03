@@ -1,0 +1,198 @@
+# HCP Pipelines 5.0.0 — updated from original BIDS App Dockerfile
+# Base: Ubuntu 22.04 LTS
+# FreeSurfer 7.3.2, FSL 6.0.7.9, Workbench 1.5.0, Python 3, HCP Pipelines 5.0.0
+#
+# Build:
+#   docker build -f Dockerfile.v5 -t hcppipelines:5.0.0 .
+#
+# Run:
+#   docker run -i --rm \
+#     -v /data/BIDS:/bids_dataset:ro \
+#     -v /outputs:/outputs \
+#     hcppipelines:5.0.0 \
+#     /bids_dataset /outputs participant --participant_label 12485 --license_key "XXXXXX"
+
+FROM ubuntu:22.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+ENV LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8"
+
+# ── Base dependencies ────────────────────────────────────────────────────────
+RUN apt-get update -qq && \
+    apt-get install -y -q --no-install-recommends \
+      bc \
+      bzip2 \
+      ca-certificates \
+      curl \
+      dc \
+      file \
+      gcc \
+      g++ \
+      git \
+      libglu1-mesa \
+      libgomp1 \
+      libxext6 \
+      libxpm-dev \
+      libxt6 \
+      libstdc++6 \
+      mc \
+      nano \
+      perl \
+      python3 \
+      python3-pip \
+      r-base \
+      r-base-dev \
+      tar \
+      tcsh \
+      unzip \
+      wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# ── R packages for ICA-FIX ───────────────────────────────────────────────────
+RUN Rscript -e 'install.packages(c("kernlab","ROCR","class","e1071","randomForest","signal","R.utils"), \
+      dependencies=TRUE, repos="https://cloud.r-project.org/")' && \
+    wget -q https://cran.r-project.org/src/contrib/Archive/party/party_1.0-25.tar.gz && \
+    R CMD INSTALL party_1.0-25.tar.gz && \
+    rm party_1.0-25.tar.gz
+
+# ── FreeSurfer 7.3.2 ─────────────────────────────────────────────────────────
+RUN wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.3.2/freesurfer_linux-ubuntu22_amd64-7.3.2.tar.gz \
+    | tar zxv -C /opt \
+      --exclude='freesurfer/trctrain' \
+      --exclude='freesurfer/subjects/fsaverage_sym' \
+      --exclude='freesurfer/subjects/fsaverage3' \
+      --exclude='freesurfer/subjects/fsaverage4' \
+      --exclude='freesurfer/subjects/fsaverage5' \
+      --exclude='freesurfer/subjects/fsaverage6' \
+      --exclude='freesurfer/subjects/cvs_avg35' \
+      --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
+      --exclude='freesurfer/subjects/bert' \
+      --exclude='freesurfer/subjects/V1_average' \
+      --exclude='freesurfer/average/mult-comp-cor' \
+      --exclude='freesurfer/lib/cuda' \
+      --exclude='freesurfer/lib/qt'
+
+ENV OS=Linux \
+    FS_OVERRIDE=0 \
+    FIX_VERTEX_AREA= \
+    SUBJECTS_DIR=/opt/freesurfer/subjects \
+    FSF_OUTPUT_FORMAT=nii.gz \
+    MNI_DIR=/opt/freesurfer/mni \
+    LOCAL_DIR=/opt/freesurfer/local \
+    FREESURFER_HOME=/opt/freesurfer \
+    FSFAST_HOME=/opt/freesurfer/fsfast \
+    MINC_BIN_DIR=/opt/freesurfer/mni/bin \
+    MINC_LIB_DIR=/opt/freesurfer/mni/lib \
+    MNI_DATAPATH=/opt/freesurfer/mni/data \
+    FMRI_ANALYSIS_DIR=/opt/freesurfer/fsfast \
+    PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
+    MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
+    PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
+
+# ── FSL 6.0.7.9 ─────────────────────────────────────────────────────────────
+RUN wget -q https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py -O /tmp/fslinstaller.py && \
+    python3 /tmp/fslinstaller.py -d /usr/local/fsl -V 6.0.7.9 --skip_registration && \
+    rm /tmp/fslinstaller.py
+
+ENV FSLDIR=/usr/local/fsl \
+    FSL_DIR=/usr/local/fsl \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    FSLMULTIFILEQUIT=TRUE \
+    POSSUMDIR=/usr/local/fsl \
+    FSLTCLSH=/usr/local/fsl/bin/fsltclsh \
+    FSLWISH=/usr/local/fsl/bin/fslwish \
+    PATH=/usr/local/fsl/bin:$PATH \
+    LD_LIBRARY_PATH=/usr/local/fsl/lib:$LD_LIBRARY_PATH
+
+# ── Connectome Workbench 1.5.0 ───────────────────────────────────────────────
+RUN wget -q https://humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip -O /tmp/wb.zip && \
+    unzip -q /tmp/wb.zip -d /opt && \
+    rm /tmp/wb.zip
+
+ENV CARET7DIR="/opt/workbench/bin_linux64"
+ENV PATH="${CARET7DIR}:$PATH"
+
+# ── HCP Pipelines 5.0.0 (from local copy) ───────────────────────────────────
+COPY HCPpipelines-5.0.0 /opt/HCP-Pipelines
+
+# Download MSM binaries (compatible with HCP Pipelines 5.x)
+RUN wget -q https://github.com/Washington-University/MSMAll/releases/download/v1.0/MSM_HOCR_v2_Linux.zip -O /tmp/msm.zip && \
+    unzip -q /tmp/msm.zip -d /tmp/msm && \
+    mkdir -p /opt/HCP-Pipelines/MSMBinaries && \
+    cp /tmp/msm*/Linux/* /opt/HCP-Pipelines/MSMBinaries/ 2>/dev/null || true && \
+    rm -rf /tmp/msm* /tmp/msm.zip
+
+ENV HCPPIPEDIR=/opt/HCP-Pipelines \
+    HCPPIPEDIR_Templates=/opt/HCP-Pipelines/global/templates \
+    HCPPIPEDIR_Bin=/opt/HCP-Pipelines/global/binaries \
+    HCPPIPEDIR_Config=/opt/HCP-Pipelines/global/config \
+    HCPPIPEDIR_PreFS=/opt/HCP-Pipelines/PreFreeSurfer/scripts \
+    HCPPIPEDIR_FS=/opt/HCP-Pipelines/FreeSurfer/scripts \
+    HCPPIPEDIR_PostFS=/opt/HCP-Pipelines/PostFreeSurfer/scripts \
+    HCPPIPEDIR_fMRISurf=/opt/HCP-Pipelines/fMRISurface/scripts \
+    HCPPIPEDIR_fMRIVol=/opt/HCP-Pipelines/fMRIVolume/scripts \
+    HCPPIPEDIR_tfMRI=/opt/HCP-Pipelines/tfMRI/scripts \
+    HCPPIPEDIR_dMRI=/opt/HCP-Pipelines/DiffusionPreprocessing/scripts \
+    HCPPIPEDIR_dMRITract=/opt/HCP-Pipelines/DiffusionTractography/scripts \
+    HCPPIPEDIR_Global=/opt/HCP-Pipelines/global/scripts \
+    HCPPIPEDIR_tfMRIAnalysis=/opt/HCP-Pipelines/TaskfMRIAnalysis/scripts \
+    MSMBINDIR=/opt/HCP-Pipelines/MSMBinaries \
+    MSMCONFIGDIR=/opt/HCP-Pipelines/MSMConfig
+
+# ── ICA-FIX ──────────────────────────────────────────────────────────────────
+RUN wget -q http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz -O /tmp/fix.tar.gz && \
+    tar zxf /tmp/fix.tar.gz -C /opt/ && \
+    mv /opt/fix* /opt/fix && \
+    rm /tmp/fix.tar.gz
+
+# Install MCR from FIX's bundled installer
+RUN cd /opt/fix/compiled/Linux/x86_64 && \
+    cp MCRInstaller.zip /tmp && \
+    cd /tmp && \
+    unzip -q MCRInstaller.zip && \
+    ./install -mode silent -agreeToLicense yes && \
+    rm -rf /tmp/MCRInstaller.zip /tmp/install
+
+ENV FSL_FIX_MATLAB_MODE=0 \
+    FSL_FIXDIR=/opt/fix
+
+# ZHH custom ICA-FIX classifier and scripts
+RUN wget -q http://argyelan.com/ZHH/ZHH30_hp2000.RData && \
+    mv ZHH30_hp2000.RData /opt/fix/training_files/ZHH30_hp2000.RData
+
+COPY settings.sh /opt/fix/settings.sh
+RUN chmod +x /opt/fix/settings.sh
+RUN mv /opt/fix/hcp_fix /opt/fix/hcp_fix.old
+COPY hcp_fix /opt/fix/hcp_fix
+RUN chmod +x /opt/fix/hcp_fix
+COPY zhh_fix /opt/fix/zhh_fix
+RUN chmod +x /opt/fix/zhh_fix
+
+# ── Python 3 (Miniconda3) ────────────────────────────────────────────────────
+ENV PATH="/usr/local/miniconda3/bin:$PATH"
+RUN curl -fsSLO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /usr/local/miniconda3 && \
+    rm Miniconda3-latest-Linux-x86_64.sh && \
+    conda install -y numpy nibabel pandas && \
+    pip install --no-cache-dir \
+      "pybids>=0.15" \
+      "nibabel>=4.0" \
+      "numpy<2.0" \
+      gradunwarp && \
+    conda clean -afy
+
+# ── BIDS validator ───────────────────────────────────────────────────────────
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    npm install -g bids-validator && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# ── Entrypoint ───────────────────────────────────────────────────────────────
+COPY run.py version /
+RUN chmod +x /run.py
+
+WORKDIR /
+ENTRYPOINT ["/run.py"]
